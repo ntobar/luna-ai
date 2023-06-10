@@ -152,7 +152,7 @@ async function getGpt3Response2(prompt) {
     });
     
     console.log(response.data.choices);
-    return response.data.choices[0].message;
+    return response.data.choices[0].message.content;
     //return response.data.choices[0].text.trim();
   }
 
