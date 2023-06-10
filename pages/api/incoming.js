@@ -102,8 +102,8 @@ async function getGpt3Response(prompt) {
     
         // Remove "Luna" from the beginning of the message
     const actualPrompt = prompt.replace(/^Luna\s*/i, "");
-    const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
-        // const response = await axios.post('https://api.openai.com/v1/engines/gpt-3.5-turbo/completions', {
+    // const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
+        const response = await axios.post('https://api.openai.com/v1/engines/gpt-3.5-turbo-0301/completions', {
 
         prompt: actualPrompt,
         max_tokens: 60
