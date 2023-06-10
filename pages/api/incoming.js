@@ -1,6 +1,8 @@
 // api/incoming.js
 const axios = require('axios');
 const { Configuration, OpenAIApi } = require("openai");
+const twilio = require('twilio');
+
 
 // import axios from 'axios';
 
@@ -88,6 +90,10 @@ module.exports =  async (req, res) => {
     if (incomingMessage.toLowerCase().includes('image')) {
         // Set this to the maximum number of tokens you want the model to generate.
         const maxTokens = 512; 
+
+        const openai = new OpenAIApi(configuration);
+
+        const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
         // Generate an image based on the message body
         const imageResult = await openai.ImageCompletion.create({
