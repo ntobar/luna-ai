@@ -95,17 +95,17 @@ module.exports =  async (req, res) => {
 async function getGpt3Response(prompt) {
     console.log(prompt);
     // Check if the message starts with "Luna"
-    if (!prompt.startsWith("Luna")) {
-            // If the message does not start with "Luna", do not respond
-            return "";
-        }
+    // if (!prompt.startsWith("Luna")) {
+    //         // If the message does not start with "Luna", do not respond
+    //         return "";
+    //     }
     
         // Remove "Luna" from the beginning of the message
-    const actualPrompt = prompt.replace(/^Luna\s*/i, "");
-    // const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
-        const response = await axios.post('https://api.openai.com/v1/engines/gpt-3.5-turbo-0301/completions', {
+    // const actualPrompt = prompt.replace(/^Luna\s*/i, "");
+    const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
+        // const response = await axios.post('https://api.openai.com/v1/chat/gpt-3.5-turbo-0301/completions', {
 
-        prompt: actualPrompt,
+        prompt: prompt,
         max_tokens: 60
     }, {
         headers: {
