@@ -100,17 +100,22 @@ module.exports =  async (req, res) => {
 
         // Generate an image based on the message body
         const imageResult = await openai.createImage({
-            prompt: messageBody,
+            prompt: incomingMessage,
+            size: "256x256",
         });
 
+        // console.log("IMAGEEEEE ", imageResult.data.data[0].url, " END IMAAAAGE");
         // Send the image URL back to the user
-        client.messages
+        const twilioResponse = client.messages
             .create({
-                mediaUrl: [`${imageResult.data.url}`],
+                mediaUrl: [`${imageResult.data.data[0].url}`],
                 from: 'whatsapp:+593994309557',
-                to: fromNumber
+                to: `whatsapp:${fromNumber}`
             })
-            .then(message => console.log(`Message sent with SID ${message.sid}`));
+            .then(message => console.log(`Message sent with SID ${message.sid}`))
+            .catch(err => res.status(500).send({ error: err }));
+
+        res.send(twilioResponse)
     } else {
     //End delete
     // Generate a response using OpenAI's GPT-3
