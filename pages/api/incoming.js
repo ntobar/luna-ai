@@ -84,6 +84,27 @@ module.exports =  async (req, res) => {
     console.log(`PROMPT IS: `, req);
     const fromNumber = req.body.From;
     
+    // Delete?
+    if (incomingMessage.toLowerCase().includes('image')) {
+        // Set this to the maximum number of tokens you want the model to generate.
+        const maxTokens = 512; 
+
+        // Generate an image based on the message body
+        const imageResult = await openai.ImageCompletion.create({
+            prompt: messageBody,
+            max_tokens: maxTokens,
+        });
+
+        // Send the image URL back to the user
+        client.messages
+            .create({
+                mediaUrl: [`${imageResult.data.url}`],
+                from: 'whatsapp:+593994309557',
+                to: fromNumber
+            })
+            .then(message => console.log(`Message sent with SID ${message.sid}`));
+    } else {
+    //End delete
     // Generate a response using OpenAI's GPT-3
     const gpt3Response = await getGpt4Response(incomingMessage);
     
@@ -91,6 +112,7 @@ module.exports =  async (req, res) => {
     res.setHeader('Content-Type', 'text/xml');
     res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
     }
+}
 };
 
 // ORIGINALL WORKING FUNCTION
