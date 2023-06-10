@@ -91,6 +91,9 @@ module.exports =  async (req, res) => {
         // Set this to the maximum number of tokens you want the model to generate.
         const maxTokens = 512; 
 
+        const configuration = new Configuration({
+            apiKey: process.env.OPENAI_API_KEY,
+          });
         const openai = new OpenAIApi(configuration);
 
         const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
