@@ -1,5 +1,7 @@
 // api/incoming.js
 const axios = require('axios');
+const { Configuration, OpenAIApi } = require("openai");
+
 // import axios from 'axios';
 
 // // This is an API route in Next.js
@@ -83,7 +85,7 @@ module.exports =  async (req, res) => {
     const fromNumber = req.body.From;
     
     // Generate a response using OpenAI's GPT-3
-    const gpt3Response = await getGpt3Response(incomingMessage);
+    const gpt3Response = await getGpt3Response2(incomingMessage);
     
     // Send a response back to Twilio
     res.setHeader('Content-Type', 'text/xml');
@@ -91,6 +93,7 @@ module.exports =  async (req, res) => {
     }
 };
 
+// ORIGINALL WORKING FUNCTION
 // Define the function to generate a response from OpenAi GPT-3
 async function getGpt3Response(prompt) {
     console.log(prompt);
@@ -117,3 +120,21 @@ async function getGpt3Response(prompt) {
     console.log(response.data.choices);
     return response.data.choices[0].text.trim();
 }
+//END OF ORIGINAL WORKING FUNCTION
+async function getGpt3Response2(prompt) {
+    console.log(prompt);
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
+    
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: prompt,
+      max_tokens: 60,
+      temperature: 0.5,
+    });
+    
+    console.log(response.data.choices);
+    return response.data.choices[0].text.trim();
+  }
