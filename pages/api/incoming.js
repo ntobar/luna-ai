@@ -99,9 +99,8 @@ module.exports =  async (req, res) => {
         const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
         // Generate an image based on the message body
-        const imageResult = await openai.ImageCompletion.create({
+        const imageResult = await openai.createImage({
             prompt: messageBody,
-            max_tokens: maxTokens,
         });
 
         // Send the image URL back to the user
