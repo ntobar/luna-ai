@@ -94,8 +94,16 @@ module.exports =  async (req, res) => {
 // Define the function to generate a response from OpenAi GPT-3
 async function getGpt3Response(prompt) {
     console.log(prompt);
+    // Check if the message starts with "Luna"
+    if (!prompt.startsWith("Luna")) {
+            // If the message does not start with "Luna", do not respond
+            return "";
+        }
+    
+        // Remove "Luna" from the beginning of the message
+    const actualPrompt = prompt.replace(/^Luna\s*/i, "");
     const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
-        prompt: prompt,
+        prompt: actualPrompt,
         max_tokens: 60
     }, {
         headers: {
