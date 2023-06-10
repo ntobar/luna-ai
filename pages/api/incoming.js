@@ -86,6 +86,7 @@ module.exports =  async (req, res) => {
     console.log(`PROMPT IS: `, req);
     const fromNumber = req.body.From;
     
+    console.log(`From numBAHHH: `, fromNumber);
     // Delete?
     if (incomingMessage.toLowerCase().includes('image')) {
         // Set this to the maximum number of tokens you want the model to generate.
@@ -111,7 +112,7 @@ module.exports =  async (req, res) => {
             .create({
                 mediaUrl: [`${imageResult.data.data[0].url}`],
                 from: 'whatsapp:+593994309557',
-                // to: `whatsapp:${fromNumber}`
+                to: `whatsapp:${fromNumber}`
             })
              .then(message => {
                 console.log(`Message sent with SID ${message.sid}`);
