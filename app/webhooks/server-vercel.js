@@ -28,6 +28,7 @@ async function getGpt3Response(prompt) {
         }
     });
 
+    
     console.log(response.data.choices);
     return response.data.choices[0].text.trim();
 }
