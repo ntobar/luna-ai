@@ -104,18 +104,33 @@ module.exports =  async (req, res) => {
             size: "256x256",
         });
 
-        // console.log("IMAGEEEEE ", imageResult.data.data[0].url, " END IMAAAAGE");
+        res.setHeader('Content-Type', 'image/png');
+        console.log("IMAGEEEEE ", imageResult.data.data[0].url, " END IMAAAAGE");
         // Send the image URL back to the user
-        const twilioResponse = client.messages
+        client.messages
             .create({
                 mediaUrl: [`${imageResult.data.data[0].url}`],
                 from: 'whatsapp:+593994309557',
                 to: `whatsapp:${fromNumber}`
             })
-            .then(message => console.log(`Message sent with SID ${message.sid}`))
-            .catch(err => res.status(500).send({ error: err }));
+             .then(message => {
+                console.log(`Message sent with SID ${message.sid}`);
+                res.status(200).send({ sid: message.sid });  // send a response
+              })
+              .catch(err => {
+                console.error(err);
+                res.status(500).send({ error: err.message });  // send a response
+              });
+        // const twilioResponse = client.messages
+        //     .create({
+        //         mediaUrl: [`${imageResult.data.data[0].url}`],
+        //         from: 'whatsapp:+593994309557',
+        //         to: `whatsapp:${fromNumber}`
+        //     })
+        //     .then(message => console.log(`Message sent with SID ${message.sid}`))
+        //     .catch(err => res.status(500).send({ error: err }));
 
-        res.send(twilioResponse)
+        // res.send(twilioResponse)
     } else {
     //End delete
     // Generate a response using OpenAI's GPT-3
