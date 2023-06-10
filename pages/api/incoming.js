@@ -4,6 +4,8 @@ import axios from 'axios';
 
 // This is an API route in Next.js
 export default async function handler(req, res) {
+    console.log(req.method); // Print out the HTTP method
+    console.log(req.headers); // Print out the request headers
   if (req.method === 'POST') {
     // This is where you handle incoming messages
     const incomingMessage = req.body.Body;
@@ -11,6 +13,7 @@ export default async function handler(req, res) {
     
     // Generate a response using OpenAI's GPT-3
     const gpt3Response = await getGpt3Response(incomingMessage);
+    console.log(gpt3Response);
     
     // Send a response back
     res.setHeader('Content-Type', 'text/xml');
