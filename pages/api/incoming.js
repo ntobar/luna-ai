@@ -112,7 +112,9 @@ module.exports =  async (req, res) => {
             .create({
                 mediaUrl: [`${imageResult.data.data[0].url}`],
                 from: 'whatsapp:+593994309557',
-                to: `whatsapp:${fromNumber}`
+                // to: `whatsapp:${fromNumber}`
+                to: fromNumber
+
             })
              .then(message => {
                 console.log(`Message sent with SID ${message.sid}`);
