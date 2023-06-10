@@ -85,7 +85,7 @@ module.exports =  async (req, res) => {
     const fromNumber = req.body.From;
     
     // Generate a response using OpenAI's GPT-3
-    const gpt3Response = await getGpt3Response2(incomingMessage);
+    const gpt3Response = await getGpt4Response(incomingMessage);
     
     // Send a response back to Twilio
     res.setHeader('Content-Type', 'text/xml');
@@ -138,3 +138,24 @@ async function getGpt3Response2(prompt) {
     console.log(response.data.choices);
     return response.data.choices[0].text.trim();
   }
+
+  async function getGpt4Response(prompt) {
+    console.log(prompt);
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
+    
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
+      messages: [{role: "user", content: prompt}],
+    });
+    
+    console.log(response.data.choices);
+    return response.data.choices[0].text.trim();
+  }
+
+//   const completion = await openai.createChatCompletion({
+//     model: "gpt-3.5-turbo",
+//     messages: [{role: "user", content: "Hello world"}],
+//   });
