@@ -1,5 +1,6 @@
 import { Footer, Navbar } from '../components';
 import { About, Explore, Feedback, GetStarted, Hero, Insights, WhatsNew, World } from '../sections';
+import ContactCard from '../sections/Contact';
 
 const Home = () => (
   <div className="bg-primary-black overflow-hidden">
@@ -20,6 +21,7 @@ const Home = () => (
       <Insights />
       <div className="gradient-04 z-0" />
       <Feedback />
+      <ContactCard />
     </div>
     <Footer />
   </div>
