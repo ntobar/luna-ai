@@ -344,7 +344,7 @@ const mp3FileUrl = exportTask.result.files[0].url;
 //   }
 // } catch (error) {
 //   console.error('Error during transcription:', error);
-console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse);
+console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse.data);
 // }
 
   // const transcriptionResponse = await axios.post(
@@ -363,5 +363,5 @@ console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse);
       if (err) console.error('Error deleting temporary file:', err);
   });
 
-  return transcriptionResponse.data.transcript;
+  return transcriptionResponse.data.text;
 }
