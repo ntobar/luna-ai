@@ -299,20 +299,22 @@ async function transcribeAudio(mediaUrl) {
       }
   });
 
-//   while (job.status !== 'finished') {
-//     await new Promise(resolve => setTimeout(resolve, 1000));  // Wait for 1 second
-//     job = await cloudConvert.jobs.get(job.id);
-// }
+  while (job.status !== 'finished') {
+    await new Promise(resolve => setTimeout(resolve, 1000));  // Wait for 1 second
+    job = await cloudConvert.jobs.get(job.id);
+}
 
-job = await cloudConvert.jobs.get(job.id);
+console.log("JOOOOOOB****: ", job);
+
+
+//job = await cloudConvert.jobs.get(job.id);
 // Get task by name
 let exportTask = job.tasks.find(task => task.name === 'export-my-file');
+console.log("EXPORT TASK****: ", exportTask);
 
 // Now the job should be completed, try to get the result
 const mp3FileUrl = exportTask.result.files[0].url;
 
-  console.log("JOOOOOOB****: ", job);
-  console.log("JOOOOOOB.TASKS****: ", job.tasks['export-my-file']);
 
   //const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
 
