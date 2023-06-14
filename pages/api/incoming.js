@@ -284,7 +284,8 @@ async function transcribeAudio(mediaUrl) {
       tasks: {
           'import-my-file': {
               operation: 'import/url',
-              url: mediaUrl
+              url: mediaUrl,
+              filename: 'file.oga'
           },
           'convert-my-file': {
               operation: 'convert',
