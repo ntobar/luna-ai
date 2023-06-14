@@ -299,7 +299,10 @@ async function transcribeAudio(mediaUrl) {
       }
   });
 
-  job = await cloudConvert.jobs.wait(job.id);
+  while (job.status !== 'finished') {
+    await new Promise(resolve => setTimeout(resolve, 1000));  // Wait for 1 second
+    job = await cloudConvert.jobs.get(job.id);
+}
 
   const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
 
