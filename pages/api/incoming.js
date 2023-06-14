@@ -304,6 +304,8 @@ async function transcribeAudio(mediaUrl) {
     job = await cloudConvert.jobs.get(job.id);
 }
 
+  console.log(job);
+
   const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
 
   // Download the converted MP3 file
