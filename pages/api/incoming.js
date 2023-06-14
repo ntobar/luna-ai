@@ -334,7 +334,18 @@ const mp3FileUrl = exportTask.result.files[0].url;
 
   const formData = new FormData();
   formData.append('file', mp3File);
+  //try {
   const transcriptionResponse = await openai.createTranscription(mp3File, 'whisper-1');
+//   if (transcriptionResponse) {
+//     console.log('Transcription:', transcriptionResponse);
+//     return transcriptionResponse;
+//   } else {
+//     console.log('No response from OpenAI API');
+//   }
+// } catch (error) {
+//   console.error('Error during transcription:', error);
+console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse);
+// }
 
   // const transcriptionResponse = await axios.post(
   //     'https://api.openai.com/v1/transcriptions',
