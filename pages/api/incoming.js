@@ -3,7 +3,6 @@ const axios = require('axios');
 const { Configuration, OpenAIApi } = require("openai");
 const twilio = require('twilio');
 const ffmpeg = require('ffmpeg');
-const axios = require('axios');
 const fs = require('fs');
 const CloudConvert = require('cloudconvert');
 
