@@ -2,6 +2,10 @@
 const axios = require('axios');
 const { Configuration, OpenAIApi } = require("openai");
 const twilio = require('twilio');
+const ffmpeg = require('ffmpeg');
+const axios = require('axios');
+const fs = require('fs');
+const CloudConvert = require('cloudconvert');
 
 
 // import axios from 'axios';
@@ -78,24 +82,34 @@ const twilio = require('twilio');
 
 require('dotenv').config();
 
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
+
 module.exports =  async (req, res) => {
 
     if (req.method === 'POST') {
     // This is where you handle incoming messages
     const incomingMessage = req.body.Body;
+    const incomingMediaUrl = req.body.MediaUrl0;
     console.log(`PROMPT IS: `, req);
     const fromNumber = req.body.From;
     
     console.log(`From numBAHHH: `, fromNumber);
+
+    // Handle voice note
+    if(incomingMediaUrl) {
+      const transcription = await transcribeAudio(incomingMediaUrl);
+
+      res.setHeader('Content-Type', 'text/xml');
+      res.send(`<Response><Message>Transcription: ${transcription}</Message></Response>`);
+    }
     // Delete?
     if (incomingMessage.toLowerCase().includes('image')) {
         // Set this to the maximum number of tokens you want the model to generate.
         const maxTokens = 512; 
 
-        const configuration = new Configuration({
-            apiKey: process.env.OPENAI_API_KEY,
-          });
-        const openai = new OpenAIApi(configuration);
 
         const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -209,7 +223,119 @@ async function getGpt3Response2(prompt) {
     //return response.data.choices[0].text.trim();
   }
 
+
+// async function transcribeAudio(url) {
+//   try {
+//     // Download the audio file
+//     const response = await axios.get(url, { responseType: 'arraybuffer' });
+
+//     // Initialize CloudConvert
+//     const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
+
+//     // Create a job to convert the audio file to MP3 format
+//     let job = await cloudConvert.jobs.create({
+//       tasks: {
+//         'import-my-file': {
+//           operation: 'import/upload',
+//           file: response.data
+//         },
+//         'convert-my-file': {
+//           operation: 'convert',
+//           input: 'import-my-file',
+//           output_format: 'mp3',
+//         },
+//         'export-my-file': {
+//           operation: 'export/url',
+//           input: 'convert-my-file'
+//         }
+//       }
+//     });
+
+//     // Upload the audio file
+//     let uploadTask = job.tasks.filter(task => task.name === 'import-my-file')[0];
+//     let formData = await cloudConvert.tasks.upload(uploadTask, response.data, 'input.opus');
+
+//     // Wait for the job to finish
+//     job = await cloudConvert.jobs.wait(job.id);
+
+//     // Get the URL of the converted audio file
+//     let exportTask = job.tasks.filter(task => task.operation === 'export/url' && task.status === 'finished')[0];
+//     let file = exportTask.result.files[0];
+//     let convertedAudioUrl = file.url;
+
+//     // Now you can use the URL of the MP3 file with your transcription service...
+//     const transcribedText = yourTranscriptionService(convertedAudioUrl);  // Replace this with your actual transcription service
+
+//     return transcribedText;
+//   } catch (error) {
+//     console.error(error);
+//   }
+// }
+
+
+
 //   const completion = await openai.createChatCompletion({
 //     model: "gpt-3.5-turbo",
 //     messages: [{role: "user", content: "Hello world"}],
 //   });
+async function transcribeAudio(mediaUrl) {
+  let cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
+
+  let job = await cloudConvert.jobs.create({
+      tasks: {
+          'import-my-file': {
+              operation: 'import/url',
+              url: mediaUrl
+          },
+          'convert-my-file': {
+              operation: 'convert',
+              input: 'import-my-file',
+              output_format: 'mp3'
+          },
+          'export-my-file': {
+              operation: 'export/url',
+              input: 'convert-my-file'
+          }
+      }
+  });
+
+  job = await cloudConvert.jobs.wait(job.id);
+
+  const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
+
+  // Download the converted MP3 file
+  const response = await axios.get(mp3FileUrl, { responseType: 'stream' });
+  const tempFilePath = '/tmp/converted.mp3';
+  const writer = fs.createWriteStream(tempFilePath);
+  response.data.pipe(writer);
+  await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+  });
+
+  // Read the MP3 file and send it to OpenAI's transcription API
+  const mp3File = fs.createReadStream(tempFilePath);
+
+
+  const formData = new FormData();
+  formData.append('file', mp3File);
+  const transcriptionResponse = await openai.createTranscription(mp3File, 'whisper-1');
+
+  // const transcriptionResponse = await axios.post(
+  //     'https://api.openai.com/v1/transcriptions',
+  //     formData,
+  //     {
+  //         headers: {
+  //             'Authorization': 'Bearer YOUR_OPENAI_API_KEY',
+  //             ...formData.getHeaders(),
+  //         },
+  //     }
+  // );
+
+  // Delete the temporary file
+  fs.unlink(tempFilePath, (err) => {
+      if (err) console.error('Error deleting temporary file:', err);
+  });
+
+  return transcriptionResponse.data.transcript;
+}
