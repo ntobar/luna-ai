@@ -1,8 +1,7 @@
 // api/incoming.js
-const axios = require('axios');
-const { Configuration, OpenAIApi } = require("openai");
+// const axios = require('axios');
+const { Configuration, OpenAIApi } = require("openai-edge");
 const twilio = require('twilio');
-const ffmpeg = require('ffmpeg');
 const fs = require('fs');
 const CloudConvert = require('cloudconvert');
 
@@ -86,6 +85,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+// START MAIN FUNCTION
 module.exports =  async (req, res) => {
 
     if (req.method === 'POST') {
@@ -158,34 +158,116 @@ module.exports =  async (req, res) => {
     }
 }
 };
+// END ORIGINAL FUNCTION
+
+// TEST VERCEL OPENAI SDK 
+// import { OpenAIStream, StreamingTextResponse } from 'ai';
+// export const runtime = 'edge';
+
+// module.exports =  async (req, res) => {
+
+//   if (req.method === 'POST') {
+//   // This is where you handle incoming messages
+//   const incomingMessage = req.body.Body;
+//   const incomingMediaUrl = req.body.MediaUrl0;
+//   console.log(`PROMPT IS: `, req);
+//   const fromNumber = req.body.From;
+  
+//   console.log(`From numBAHHH: `, fromNumber);
+
+//   // Handle voice note
+//   if(incomingMediaUrl) {
+//     const transcription = await transcribeAudio(incomingMediaUrl);
+
+//     res.setHeader('Content-Type', 'text/xml');
+//     res.send(`<Response><Message>Transcription: ${transcription}</Message></Response>`);
+//   }
+//   // Delete?
+//   if (incomingMessage.toLowerCase().includes('image')) {
+//       // Set this to the maximum number of tokens you want the model to generate.
+//       const maxTokens = 512; 
+
+
+//       const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+//       // Generate an image based on the message body
+//       const imageResult = await openai.createImage({
+//           prompt: incomingMessage,
+//           size: "256x256",
+//       });
+
+//       res.setHeader('Content-Type', 'image/png');
+//       console.log("IMAGEEEEE ", imageResult.data.data[0].url, " END IMAAAAGE");
+//       // Send the image URL back to the user
+//       client.messages
+//           .create({
+//               mediaUrl: [`${imageResult.data.data[0].url}`],
+//               from: 'whatsapp:+593994309557',
+//               // to: `whatsapp:${fromNumber}`
+//               to: fromNumber
+
+//           })
+//            .then(message => {
+//               console.log(`Message sent with SID ${message.sid}`);
+//               res.status(200).send({ sid: message.sid });  // send a response
+//             })
+//             .catch(err => {
+//               console.error(err);
+//               res.status(500).send({ error: err.message });  // send a response
+//             });
+//       // const twilioResponse = client.messages
+//       //     .create({
+//       //         mediaUrl: [`${imageResult.data.data[0].url}`],
+//       //         from: 'whatsapp:+593994309557',
+//       //         to: `whatsapp:${fromNumber}`
+//       //     })
+//       //     .then(message => console.log(`Message sent with SID ${message.sid}`))
+//       //     .catch(err => res.status(500).send({ error: err }));
+
+//       // res.send(twilioResponse)
+//   } else {
+
+//   //End delete
+//   // Generate a response using OpenAI's GPT-3
+//   const gpt3Response = await getGpt4ResponseStreamed(incomingMessage);
+  
+//   // Send a response back to Twilio
+//   res.setHeader('Content-Type', 'text/xml');
+//   res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
+//   }
+// }
+// };
+// END VERCEL OPENAI SDK
+
+
 
 // ORIGINALL WORKING FUNCTION
 // Define the function to generate a response from OpenAi GPT-3
-async function getGpt3Response(prompt) {
-    console.log(prompt);
-    // Check if the message starts with "Luna"
-    // if (!prompt.startsWith("Luna")) {
-    //         // If the message does not start with "Luna", do not respond
-    //         return "";
-    //     }
+// async function getGpt3Response(prompt) {
+//     console.log(prompt);
+//     // Check if the message starts with "Luna"
+//     // if (!prompt.startsWith("Luna")) {
+//     //         // If the message does not start with "Luna", do not respond
+//     //         return "";
+//     //     }
     
-        // Remove "Luna" from the beginning of the message
-    // const actualPrompt = prompt.replace(/^Luna\s*/i, "");
-    const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
-        // const response = await axios.post('https://api.openai.com/v1/chat/gpt-3.5-turbo-0301/completions', {
+//         // Remove "Luna" from the beginning of the message
+//     // const actualPrompt = prompt.replace(/^Luna\s*/i, "");
+//     const response = await axios.post('https://api.openai.com/v1/engines/text-davinci-002/completions', {
+//         // const response = await axios.post('https://api.openai.com/v1/chat/gpt-3.5-turbo-0301/completions', {
 
-        prompt: prompt,
-        max_tokens: 60
-    }, {
-        headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-        }
-    });
+//         prompt: prompt,
+//         max_tokens: 60
+//     }, {
+//         headers: {
+//             'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+//         }
+//     });
 
     
-    console.log(response.data.choices);
-    return response.data.choices[0].text.trim();
-}
+//     console.log(response.data.choices);
+//     return response.data.choices[0].text.trim();
+// }
 //END OF ORIGINAL WORKING FUNCTION
 async function getGpt3Response2(prompt) {
     console.log(prompt);
@@ -222,61 +304,120 @@ async function getGpt3Response2(prompt) {
     //return response.data.choices[0].text.trim();
   }
 
-
-// async function transcribeAudio(url) {
-//   try {
-//     // Download the audio file
-//     const response = await axios.get(url, { responseType: 'arraybuffer' });
-
-//     // Initialize CloudConvert
-//     const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
-
-//     // Create a job to convert the audio file to MP3 format
-//     let job = await cloudConvert.jobs.create({
-//       tasks: {
-//         'import-my-file': {
-//           operation: 'import/upload',
-//           file: response.data
-//         },
-//         'convert-my-file': {
-//           operation: 'convert',
-//           input: 'import-my-file',
-//           output_format: 'mp3',
-//         },
-//         'export-my-file': {
-//           operation: 'export/url',
-//           input: 'convert-my-file'
-//         }
-//       }
-//     });
-
-//     // Upload the audio file
-//     let uploadTask = job.tasks.filter(task => task.name === 'import-my-file')[0];
-//     let formData = await cloudConvert.tasks.upload(uploadTask, response.data, 'input.opus');
-
-//     // Wait for the job to finish
-//     job = await cloudConvert.jobs.wait(job.id);
-
-//     // Get the URL of the converted audio file
-//     let exportTask = job.tasks.filter(task => task.operation === 'export/url' && task.status === 'finished')[0];
-//     let file = exportTask.result.files[0];
-//     let convertedAudioUrl = file.url;
-
-//     // Now you can use the URL of the MP3 file with your transcription service...
-//     const transcribedText = yourTranscriptionService(convertedAudioUrl);  // Replace this with your actual transcription service
-
-//     return transcribedText;
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
-
+  async function getGpt4ResponseStreamed(prompt) {
+    console.log(prompt);
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
+    
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
+      stream: true,
+      messages: [{role: "user", content: prompt}],
+    });
+    
+    const stream = OpenAIStream(response);
+    console.log("Streaming response: ", StreamingTextResponse(stream));
+    return new StreamingTextResponse(stream);
+    //return response.data.choices[0].text.trim();
+  }
 
 
 //   const completion = await openai.createChatCompletion({
 //     model: "gpt-3.5-turbo",
 //     messages: [{role: "user", content: "Hello world"}],
 //   });
+// async function transcribeAudio(mediaUrl) {
+//   let cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
+
+//   let job = await cloudConvert.jobs.create({
+//       tasks: {
+//           'import-my-file': {
+//               operation: 'import/url',
+//               url: mediaUrl,
+//               filename: 'file.oga'
+//           },
+//           'convert-my-file': {
+//               operation: 'convert',
+//               input: 'import-my-file',
+//               output_format: 'mp3'
+//           },
+//           'export-my-file': {
+//               operation: 'export/url',
+//               input: 'convert-my-file'
+//           }
+//       }
+//   });
+
+//   while (job.status !== 'finished') {
+//     await new Promise(resolve => setTimeout(resolve, 1000));  // Wait for 1 second
+//     job = await cloudConvert.jobs.get(job.id);
+// }
+
+// console.log("JOOOOOOB****: ", job);
+
+
+// //job = await cloudConvert.jobs.get(job.id);
+// // Get task by name
+// let exportTask = job.tasks.find(task => task.name === 'export-my-file');
+// console.log("EXPORT TASK****: ", exportTask);
+
+// // Now the job should be completed, try to get the result
+// const mp3FileUrl = exportTask.result.files[0].url;
+
+
+//   //const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
+
+//   // Download the converted MP3 file
+//   const response = await axios.get(mp3FileUrl, { responseType: 'stream' });
+
+//   const tempFilePath = '/tmp/converted.mp3';
+//   const writer = fs.createWriteStream(tempFilePath);
+//   response.data.pipe(writer);
+//   await new Promise((resolve, reject) => {
+//       writer.on('finish', resolve);
+//       writer.on('error', reject);
+//   });
+
+//   // Read the MP3 file and send it to OpenAI's transcription API
+//   const mp3File = fs.createReadStream(tempFilePath);
+
+
+//   const formData = new FormData();
+//   formData.append('file', mp3File);
+//   //try {
+//   const transcriptionResponse = await openai.createTranscription(mp3File, 'whisper-1');
+// //   if (transcriptionResponse) {
+// //     console.log('Transcription:', transcriptionResponse);
+// //     return transcriptionResponse;
+// //   } else {
+// //     console.log('No response from OpenAI API');
+// //   }
+// // } catch (error) {
+// //   console.error('Error during transcription:', error);
+// console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse.data);
+// // }
+
+//   // const transcriptionResponse = await axios.post(
+//   //     'https://api.openai.com/v1/transcriptions',
+//   //     formData,
+//   //     {
+//   //         headers: {
+//   //             'Authorization': 'Bearer YOUR_OPENAI_API_KEY',
+//   //             ...formData.getHeaders(),
+//   //         },
+//   //     }
+//   // );
+
+//   // Delete the temporary file
+//   fs.unlink(tempFilePath, (err) => {
+//       if (err) console.error('Error deleting temporary file:', err);
+//   });
+
+//   return transcriptionResponse.data.text;
+// }
+
 async function transcribeAudio(mediaUrl) {
   let cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
 
@@ -306,8 +447,6 @@ async function transcribeAudio(mediaUrl) {
 
 console.log("JOOOOOOB****: ", job);
 
-
-//job = await cloudConvert.jobs.get(job.id);
 // Get task by name
 let exportTask = job.tasks.find(task => task.name === 'export-my-file');
 console.log("EXPORT TASK****: ", exportTask);
@@ -319,10 +458,11 @@ const mp3FileUrl = exportTask.result.files[0].url;
   //const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
 
   // Download the converted MP3 file
-  const response = await axios.get(mp3FileUrl, { responseType: 'stream' });
+const response = await fetch(mp3FileUrl);
+const stream = response.body;
   const tempFilePath = '/tmp/converted.mp3';
   const writer = fs.createWriteStream(tempFilePath);
-  response.data.pipe(writer);
+  stream.pipe(writer);
   await new Promise((resolve, reject) => {
       writer.on('finish', resolve);
       writer.on('error', reject);
