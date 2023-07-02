@@ -153,9 +153,17 @@ module.exports =  async (req, res) => {
     console.log("&&&&&&&&&&&&&&&& Before awaiting gpt 4 response");
     const gpt3Response = await getGpt4Response(incomingMessage);
     
-    // Send a response back to Twilio
     res.setHeader('Content-Type', 'text/xml');
+    if(gpt3Response.length < 1500) {
+    // Send a response back to Twilio
+    console.log("Message length is less than 1500 characters")
     res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
+    } else {
+
+      console.log("Message length is more than 1500 characters, splitting message");
+      res.status(204).end();
+      sendTwilioMessage1600Characters(gpt3Response, fromNumber);
+    }
     }
 }
 };
@@ -305,6 +313,57 @@ async function getGpt3Response2(prompt) {
     return response.data.choices[0].message.content;
     //return response.data.choices[0].text.trim();
   }
+
+  function splitMessage(message, limit) {
+  var chunks = [];
+  while (message.length > 0) {
+      var chunk = message.substr(0, limit);
+      var lastSpace = chunk.lastIndexOf(' ');
+      if (lastSpace !== -1 && message.length > limit) {
+          chunk = chunk.substr(0, lastSpace);
+      }
+      chunks.push(chunk);
+      message = message.substr(chunk.length);
+  }
+  return chunks;
+}
+
+async function sendTwilioMessage1600Characters(gpt4Response, toNumber) {
+    const chunks = splitMessage(gpt4Response, 1500);
+    const responses = [];  // Array to store responses
+
+    console.log("Chunks length: ", chunks.length);
+    console.log("Chunks message: ", chunks);
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    for (let i = 0; i < chunks.length; i++) {
+        const params = new URLSearchParams({
+            From: 'whatsapp:+593994309557',
+            To: toNumber,
+            Body: chunks[i],
+        }).toString();
+        const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
+            },
+            body: params
+        });
+
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            console.log('Failed to send SMS: ', errorMessage);
+            throw new Error('Failed to send SMS: ' + errorMessage);
+        } else {
+            const json = await response.json();
+            console.log('Twilio response: ', json);
+            responses.push(json);  // Add response to array
+        }
+    }
+    return responses;  // Return array of responses after loop
+}
 
   // async function getGpt4ResponseStreamed(prompt) {
   //   console.log(prompt);
