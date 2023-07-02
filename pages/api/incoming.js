@@ -1,6 +1,6 @@
 // api/incoming.js
-// const axios = require('axios');
-const { Configuration, OpenAIApi } = require("openai-edge");
+const axios = require('axios');
+const { Configuration, OpenAIApi } = require("openai");
 const twilio = require('twilio');
 const fs = require('fs');
 const CloudConvert = require('cloudconvert');
@@ -92,10 +92,10 @@ module.exports =  async (req, res) => {
     // This is where you handle incoming messages
     const incomingMessage = req.body.Body;
     const incomingMediaUrl = req.body.MediaUrl0;
-    console.log(`PROMPT IS: `, req);
+    console.log(`PROMPT IS: `, incomingMessage);
     const fromNumber = req.body.From;
     
-    console.log(`From numBAHHH: `, fromNumber);
+    console.log(`From number line 98: `, fromNumber);
 
     // Handle voice note
     if(incomingMediaUrl) {
@@ -150,6 +150,7 @@ module.exports =  async (req, res) => {
     } else {
     //End delete
     // Generate a response using OpenAI's GPT-3
+    console.log("&&&&&&&&&&&&&&&& Before awaiting gpt 4 response");
     const gpt3Response = await getGpt4Response(incomingMessage);
     
     // Send a response back to Twilio
@@ -288,7 +289,7 @@ async function getGpt3Response2(prompt) {
   }
 
   async function getGpt4Response(prompt) {
-    console.log(prompt);
+    console.log("PROMPT IN GET GPT 4 RESPONSE FUN: ", prompt);
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -299,29 +300,32 @@ async function getGpt3Response2(prompt) {
       messages: [{role: "user", content: prompt}],
     });
     
-    console.log(response.data.choices);
+    console.log("Response data: ***** ", response);
+    // console.log(response.data.choices);
     return response.data.choices[0].message.content;
     //return response.data.choices[0].text.trim();
   }
 
-  async function getGpt4ResponseStreamed(prompt) {
-    console.log(prompt);
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    const openai = new OpenAIApi(configuration);
+  // async function getGpt4ResponseStreamed(prompt) {
+  //   console.log(prompt);
+  //   const configuration = new Configuration({
+  //     apiKey: process.env.OPENAI_API_KEY,
+  //   });
+  //   const openai = new OpenAIApi(configuration);
     
-    const response = await openai.createChatCompletion({
-      model: "gpt-4",
-      stream: true,
-      messages: [{role: "user", content: prompt}],
-    });
+  //   const response = await openai.createChatCompletion({
+  //     model: "gpt-4",
+  //     stream: true,
+  //     messages: [{role: "user", content: prompt}],
+  //   });
     
-    const stream = OpenAIStream(response);
-    console.log("Streaming response: ", StreamingTextResponse(stream));
-    return new StreamingTextResponse(stream);
-    //return response.data.choices[0].text.trim();
-  }
+  //   const stream = OpenAIStream(response);
+  //   console.log("Streaming response: ", StreamingTextResponse(stream));
+  //   return new StreamingTextResponse(stream);
+  //   //return response.data.choices[0].text.trim();
+  // }
+
+
 
 
 //   const completion = await openai.createChatCompletion({
