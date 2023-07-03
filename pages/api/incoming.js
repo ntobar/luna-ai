@@ -4,6 +4,7 @@ const { Configuration, OpenAIApi } = require("openai");
 const twilio = require('twilio');
 const fs = require('fs');
 const CloudConvert = require('cloudconvert');
+const path = require('path');
 
 
 // import axios from 'axios';
@@ -481,6 +482,96 @@ async function sendTwilioMessage1600Characters(gpt4Response, toNumber) {
 //   return transcriptionResponse.data.text;
 // }
 
+// BEGINNING ORIGINAL FUNCTION
+// async function transcribeAudio(mediaUrl) {
+//   let cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
+
+//   let job = await cloudConvert.jobs.create({
+//       tasks: {
+//           'import-my-file': {
+//               operation: 'import/url',
+//               url: mediaUrl,
+//               filename: 'file.oga'
+//           },
+//           'convert-my-file': {
+//               operation: 'convert',
+//               input: 'import-my-file',
+//               output_format: 'mp3'
+//           },
+//           'export-my-file': {
+//               operation: 'export/url',
+//               input: 'convert-my-file'
+//           }
+//       }
+//   });
+
+//   while (job.status !== 'finished') {
+//     await new Promise(resolve => setTimeout(resolve, 1000));  // Wait for 1 second
+//     job = await cloudConvert.jobs.get(job.id);
+// }
+
+// console.log("JOOOOOOB****: ", job);
+
+// // Get task by name
+// let exportTask = job.tasks.find(task => task.name === 'export-my-file');
+// console.log("EXPORT TASK****: ", exportTask);
+
+// // Now the job should be completed, try to get the result
+// const mp3FileUrl = exportTask.result.files[0].url;
+
+
+//   //const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
+
+//   // Download the converted MP3 file
+// const response = await fetch(mp3FileUrl);
+// const stream = response.body;
+//   const tempFilePath = '/tmp/converted.mp3';
+//   const writer = fs.createWriteStream(tempFilePath);
+//   stream.pipe(writer);
+//   await new Promise((resolve, reject) => {
+//       writer.on('finish', resolve);
+//       writer.on('error', reject);
+//   });
+
+//   // Read the MP3 file and send it to OpenAI's transcription API
+//   const mp3File = fs.createReadStream(tempFilePath);
+
+
+//   const formData = new FormData();
+//   formData.append('file', mp3File);
+//   //try {
+//   const transcriptionResponse = await openai.createTranscription(mp3File, 'whisper-1');
+// //   if (transcriptionResponse) {
+// //     console.log('Transcription:', transcriptionResponse);
+// //     return transcriptionResponse;
+// //   } else {
+// //     console.log('No response from OpenAI API');
+// //   }
+// // } catch (error) {
+// //   console.error('Error during transcription:', error);
+// console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse.data);
+// // }
+
+//   // const transcriptionResponse = await axios.post(
+//   //     'https://api.openai.com/v1/transcriptions',
+//   //     formData,
+//   //     {
+//   //         headers: {
+//   //             'Authorization': 'Bearer YOUR_OPENAI_API_KEY',
+//   //             ...formData.getHeaders(),
+//   //         },
+//   //     }
+//   // );
+
+//   // Delete the temporary file
+//   fs.unlink(tempFilePath, (err) => {
+//       if (err) console.error('Error deleting temporary file:', err);
+//   });
+
+//   return transcriptionResponse.data.text;
+// }
+// END ORIGINAL FUNCTION
+
 async function transcribeAudio(mediaUrl) {
   let cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
 
@@ -506,26 +597,18 @@ async function transcribeAudio(mediaUrl) {
   while (job.status !== 'finished') {
     await new Promise(resolve => setTimeout(resolve, 1000));  // Wait for 1 second
     job = await cloudConvert.jobs.get(job.id);
-}
+  }
 
-console.log("JOOOOOOB****: ", job);
-
-// Get task by name
-let exportTask = job.tasks.find(task => task.name === 'export-my-file');
-console.log("EXPORT TASK****: ", exportTask);
-
-// Now the job should be completed, try to get the result
-const mp3FileUrl = exportTask.result.files[0].url;
-
-
-  //const mp3FileUrl = job.tasks['export-my-file'].result.files[0].url;
+  let exportTask = job.tasks.find(task => task.name === 'export-my-file');
+  const mp3FileUrl = exportTask.result.files[0].url;
 
   // Download the converted MP3 file
-const response = await fetch(mp3FileUrl);
-const stream = response.body;
-  const tempFilePath = '/tmp/converted.mp3';
+  const response = await axios.get(mp3FileUrl, { responseType: 'stream' });
+  const tempFilePath = path.join(__dirname, 'tmp', 'converted.mp3');
   const writer = fs.createWriteStream(tempFilePath);
-  stream.pipe(writer);
+  
+  response.data.pipe(writer);
+
   await new Promise((resolve, reject) => {
       writer.on('finish', resolve);
       writer.on('error', reject);
@@ -534,32 +617,7 @@ const stream = response.body;
   // Read the MP3 file and send it to OpenAI's transcription API
   const mp3File = fs.createReadStream(tempFilePath);
 
-
-  const formData = new FormData();
-  formData.append('file', mp3File);
-  //try {
   const transcriptionResponse = await openai.createTranscription(mp3File, 'whisper-1');
-//   if (transcriptionResponse) {
-//     console.log('Transcription:', transcriptionResponse);
-//     return transcriptionResponse;
-//   } else {
-//     console.log('No response from OpenAI API');
-//   }
-// } catch (error) {
-//   console.error('Error during transcription:', error);
-console.log("*******TRANSCRIPTION RESPONSE", transcriptionResponse.data);
-// }
-
-  // const transcriptionResponse = await axios.post(
-  //     'https://api.openai.com/v1/transcriptions',
-  //     formData,
-  //     {
-  //         headers: {
-  //             'Authorization': 'Bearer YOUR_OPENAI_API_KEY',
-  //             ...formData.getHeaders(),
-  //         },
-  //     }
-  // );
 
   // Delete the temporary file
   fs.unlink(tempFilePath, (err) => {
