@@ -2,7 +2,7 @@
 const axios = require('axios');
 const { Configuration, OpenAIApi } = require("openai");
 const twilio = require('twilio');
-const fs = require('fs');
+const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
 const path = require('path');
 
@@ -604,8 +604,11 @@ async function transcribeAudio(mediaUrl) {
 
   // Download the converted MP3 file
   const response = await axios.get(mp3FileUrl, { responseType: 'stream' });
-  const tempFilePath = path.join(__dirname, 'tmp', 'converted.mp3');
-  const writer = fs.createWriteStream(tempFilePath);
+// Ensure the directory exists
+await fs.ensureDir(path.join(__dirname, 'tmp'));
+
+const tempFilePath = path.join(__dirname, 'tmp', 'converted.mp3');
+const writer = fs.createWriteStream(tempFilePath);
   
   response.data.pipe(writer);
 
