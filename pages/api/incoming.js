@@ -104,9 +104,8 @@ module.exports =  async (req, res) => {
 
       res.setHeader('Content-Type', 'text/xml');
       res.send(`<Response><Message>Transcription: ${transcription}</Message></Response>`);
-    }
-    // Delete?
-    if (incomingMessage.toLowerCase().includes('image')) {
+      
+    } else if (incomingMessage.toLowerCase().includes('image')) {
         // Set this to the maximum number of tokens you want the model to generate.
         const maxTokens = 512; 
 
