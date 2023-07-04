@@ -195,7 +195,7 @@ async function sendTwilioMessage1600Characters(gpt4Response, toNumber) {
 }
 
 async function transcribeAudio(mediaUrl) {
-  console.log(`[ Audio Transcription  ][ CloudConvert ] - Converting audio file from OGA to MP3 for media with url ${incomingMediaUrl}`);
+  console.log(`[ Audio Transcription  ][ CloudConvert ] - Converting audio file from OGA to MP3 for media with url ${mediaUrl}`);
 
   try {
     let cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
