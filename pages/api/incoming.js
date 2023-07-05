@@ -4,6 +4,7 @@ const twilio = require('twilio');
 const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
 const path = require('path');
+const db = require('../../db/db');
 
 
 require('dotenv').config();
@@ -16,6 +17,7 @@ const openai = new OpenAIApi(configuration);
 // START MAIN FUNCTION
 module.exports = async (req, res) => {
   if (req.method === 'POST') {
+    testConnection();
     const incomingMessage = req.body.Body;
     const incomingMediaUrl = req.body.MediaUrl0;
     const fromNumber = req.body.From;
@@ -95,6 +97,19 @@ module.exports = async (req, res) => {
     }
   }
 };
+
+async function testConnection() {
+  try {
+    // Execute a simple query to retrieve data
+    const result = await db.query('SELECT * FROM users LIMIT 1');
+    console.log('Connection successful:', result);
+  } catch (error) {
+    console.error('Error connecting to the database:', error);
+  } finally {
+    // Close the database connection
+    db.$pool.end();
+  }
+}
 
 async function getGpt3Response2(prompt) {
   console.log(prompt);
