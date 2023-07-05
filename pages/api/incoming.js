@@ -238,6 +238,7 @@ async function sendResponse(gpt4Response, toNumber) {
     // const authToken = process.env.TWILIO_AUTH_TOKEN;
 
     for (let i = 0; i < chunks.length; i++) {
+      console.log(`Chunk ${chunks[i]}: ${chunks[i]}`);
       sendTwilioMessage(chunks[i], toNumber);
       // const params = new URLSearchParams({
       //   From: 'whatsapp:+593994309557',
