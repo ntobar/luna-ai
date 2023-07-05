@@ -6,6 +6,7 @@ const CloudConvert = require('cloudconvert');
 const path = require('path');
 const db = require('../../db/db');
 
+const userRepository = require('../../db/userRepository');
 
 require('dotenv').config();
 
@@ -17,10 +18,25 @@ const openai = new OpenAIApi(configuration);
 // START MAIN FUNCTION
 module.exports = async (req, res) => {
   if (req.method === 'POST') {
-    testConnection();
+    // testConnection();
     const incomingMessage = req.body.Body;
     const incomingMediaUrl = req.body.MediaUrl0;
     const fromNumber = req.body.From;
+
+    // Database handling
+    const whatsappNumber = fromNumber.replace('whatsapp:', '');
+    // Check if the user exists
+    const existingUser = await userRepository.getUserByWhatsAppNumber(whatsappNumber);
+
+    if (existingUser) {
+      // User already exists, update last_seen
+      await userRepository.updateLastSeen(existingUser.user_id);
+    } else {
+      // User doesn't exist, create new user
+      const userId = await userRepository.createUser(whatsappNumber, ProfileName);
+      existingUser = { user_id: userId };
+    }
+
 
     console.log("****** REQ: ", req);
     console.log("****** REQ BODY: ", req.body);
