@@ -6,9 +6,9 @@ async function createUser(whatsappNumber, name) {
         const userId = uuidv4(); // Generate a new UUID
 
         const result = await db.one(
-            `INSERT INTO users (user_id, whatsapp_number, name)
+            `INSERT INTO users (id, whatsapp_number, name)
          VALUES ($1, $2, $3)
-         RETURNING user_id`,
+         RETURNING id`,
             [userId, whatsappNumber, name]
         );
         await updateLastSeen(result.id)
@@ -43,7 +43,7 @@ async function getUserByWhatsAppNumber(whatsappNumber) {
 async function updateLastSeen(userId) {
     try {
         await db.none(
-            `UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE user_id = $1`,
+            `UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = $1`,
             userId
         );
         console.log(`[ Users Database ] - Successfully updated last seen for user with id ${userId}`);
