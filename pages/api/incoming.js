@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     // Database handling
     const whatsappNumber = fromNumber.replace('whatsapp:', '');
     // Check if the user exists
-    const existingUser = await userRepository.getUserByWhatsAppNumber(whatsappNumber);
+    let existingUser = await userRepository.getUserByWhatsAppNumber(whatsappNumber);
 
     if (existingUser) {
       // User already exists, update last_seen
