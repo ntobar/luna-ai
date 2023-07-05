@@ -6,8 +6,7 @@ const connection = {
   port: 5432,
   database: 'luna-db',
   user: 'postgres',
-//   password: null
-
+  password: 'Ntobar99!'
 };
 const db = pgp(connection);
 module.exports = db;
