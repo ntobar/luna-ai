@@ -22,6 +22,7 @@ module.exports = async (req, res) => {
     const incomingMessage = req.body.Body;
     const incomingMediaUrl = req.body.MediaUrl0;
     const fromNumber = req.body.From;
+    const profileName = req.body.ProfileName;
 
     // Database handling
     const whatsappNumber = fromNumber.replace('whatsapp:', '');
@@ -33,7 +34,7 @@ module.exports = async (req, res) => {
       await userRepository.updateLastSeen(existingUser.user_id);
     } else {
       // User doesn't exist, create new user
-      const userId = await userRepository.createUser(whatsappNumber, ProfileName);
+      const userId = await userRepository.createUser(whatsappNumber, profileName);
       existingUser = { user_id: userId };
     }
 
