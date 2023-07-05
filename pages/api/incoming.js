@@ -31,11 +31,11 @@ module.exports = async (req, res) => {
 
     if (existingUser) {
       // User already exists, update last_seen
-      await userRepository.updateLastSeen(existingUser.user_id);
+      await userRepository.updateLastSeen(existingUser.id);
     } else {
       // User doesn't exist, create new user
       const userId = await userRepository.createUser(whatsappNumber, profileName);
-      existingUser = { user_id: userId };
+      existingUser = { id: userId };
     }
 
 
