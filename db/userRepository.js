@@ -1,12 +1,15 @@
-import { one, $config, oneOrNone, none } from './db';
+const db = require('./db');
+const { v4: uuidv4 } = require('uuid');
 
 async function createUser(whatsappNumber, name) {
     try {
-      const result = await one(
+      const userId = uuidv4(); // Generate a new UUID
+
+      const result = await db.one(
         `INSERT INTO users (user_id, whatsapp_number, name)
          VALUES ($1, $2, $3)
          RETURNING user_id`,
-        [$config.pgp.as.uuid(), whatsappNumber, name]
+        [userId, whatsappNumber, name]
       );
       await updateLastSeen(result.user_id)
       console.log(`[ Users Database ] - Successfully created user for ${name} with number ${whatsappNumber}. User Id = ${result.user_id}`);
@@ -19,7 +22,7 @@ async function createUser(whatsappNumber, name) {
 
 async function getUserByWhatsAppNumber(whatsappNumber) {
     try {
-        const user = await oneOrNone(
+        const user = await db.oneOrNone(
             `SELECT * FROM users WHERE whatsapp_number = $1`,
             whatsappNumber
         );
@@ -34,7 +37,7 @@ async function getUserByWhatsAppNumber(whatsappNumber) {
 
 async function updateLastSeen(userId) {
     try {
-      await none(
+      await db.none(
         `UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE user_id = $1`,
         userId
       );
@@ -45,7 +48,7 @@ async function updateLastSeen(userId) {
     }
   }
 
-  export default {
+  module.exports = {
     getUserByWhatsAppNumber,
     createUser,
     updateLastSeen
