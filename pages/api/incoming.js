@@ -103,16 +103,18 @@ module.exports = async (req, res) => {
       console.log(`[ Chat Completion ] - OPENAI response received with ${gpt3Response.length} characters: ${gpt3Response}`);
 
       res.setHeader('Content-Type', 'text/xml');
-      if (gpt3Response.length < 1500) {
-        // Send a response back to Twilio
-        console.log(`[ Chat Completion ] - Message length has less than 1500 characters, sending response`)
-        res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
-      } else {
+      // if (gpt3Response.length < 1500) {
+      //   // Send a response back to Twilio
+      //   console.log(`[ Chat Completion ] - Message length has less than 1500 characters, sending response`)
+      //   res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
+      // } else {
 
-        console.log(`[ Chat Completion ] - Message length has more than 1500 characters, splitting message`)
+        console.log(`[ Chat Completion ] - Handling response message with ${gpt3Response.length} characters`);
         res.status(204).end();
-        sendTwilioMessage1600Characters(gpt3Response, fromNumber);
-      }
+        sendResponse(gpt3Response, fromNumber);
+
+        // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
+      //}
     }
   }
 };
@@ -186,41 +188,81 @@ function splitMessage(message, limit) {
   return chunks;
 }
 
-async function sendTwilioMessage1600Characters(gpt4Response, toNumber) {
+async function sendTwilioMessage(gpt4Response, toNumber) {
   try {
-    const chunks = splitMessage(gpt4Response, 1500);
-    const responses = [];  // Array to store responses
-
-    console.log(`[ Chat Completion ][ Twilio Callback ]: Split text, preparing to send ${chunks.length} messages to Twilio Client`);
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-    for (let i = 0; i < chunks.length; i++) {
-      const params = new URLSearchParams({
-        From: 'whatsapp:+593994309557',
-        To: toNumber,
-        Body: chunks[i],
-      }).toString();
-      const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
-        },
-        body: params
-      });
+    const params = new URLSearchParams({
+      From: 'whatsapp:+593994309557',
+      To: toNumber,
+      Body: gpt4Response,
+    }).toString();
+    const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
+      },
+      body: params
+    });
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        console.log('Failed to send SMS: ', errorMessage);
-        throw new Error('Failed to send SMS: ' + errorMessage);
-      } else {
-        const json = await response.json();
-        console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
-        responses.push(json);  // Add response to array
-      }
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      console.log('Failed to send SMS: ', errorMessage);
+      throw new Error('Failed to send SMS: ' + errorMessage);
+    } else {
+      const json = await response.json();
+      console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
     }
-    return responses;  // Return array of responses after loop
+
+  } catch (err) {
+
+  }
+}
+
+async function sendResponse(gpt4Response, toNumber) {
+  try {
+
+
+
+    if(gpt4Response.length < 1500) {
+      console.log(`[ Chat Completion ][ Twilio Callback ]: Preparing to send response to Twilio Client`);
+
+      sendTwilioMessage(gpt4Response, toNumber);
+    } else {
+    const chunks = splitMessage(gpt4Response, 1500);
+
+    console.log(`[ Chat Completion ][ Twilio Callback ]: Split text, preparing to send ${chunks.length} messages to Twilio Client`);
+    // const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    // const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    for (let i = 0; i < chunks.length; i++) {
+      sendTwilioMessage(chunks[i], toNumber);
+      // const params = new URLSearchParams({
+      //   From: 'whatsapp:+593994309557',
+      //   To: toNumber,
+      //   Body: chunks[i],
+      // }).toString();
+      // const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/x-www-form-urlencoded',
+      //     'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
+      //   },
+      //   body: params
+      // });
+
+      // if (!response.ok) {
+      //   const errorMessage = await response.text();
+      //   console.log('Failed to send SMS: ', errorMessage);
+      //   throw new Error('Failed to send SMS: ' + errorMessage);
+      // } else {
+      //   const json = await response.json();
+      //   console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
+      // }
+    }
+  }
   } catch (err) {
     console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Failed to send messages to Twilio client, error: ${err}`);
     console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Error message: ${err.message}`);
