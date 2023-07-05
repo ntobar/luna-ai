@@ -22,6 +22,8 @@ module.exports = async (req, res) => {
     const incomingMediaUrl = req.body.MediaUrl0;
     const fromNumber = req.body.From;
 
+    console.log("****** REQ: ", req);
+    console.log("****** REQ BODY: ", req.body);
     console.log(`[ Incoming Request ] Received prompt: ${incomingMessage} from number ${fromNumber}`);
 
     // Handle voice note
