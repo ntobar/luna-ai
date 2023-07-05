@@ -6,7 +6,7 @@ const CloudConvert = require('cloudconvert');
 const path = require('path');
 const db = require('../../db/db');
 
-const userRepository = require('../../db/userRepository');
+const userRepository = require('../../db/userRepository').default;
 
 require('dotenv').config();
 
