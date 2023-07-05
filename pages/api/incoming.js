@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
 
         console.log(`[ Chat Completion ] - Handling response message with ${gpt3Response.length} characters`);
         res.status(204).end();
-        sendResponse(gpt3Response, fromNumber);
+        await sendResponse(gpt3Response, fromNumber);
 
         // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
       //}
@@ -229,7 +229,7 @@ async function sendResponse(gpt4Response, toNumber) {
     if(gpt4Response.length < 1500) {
       console.log(`[ Chat Completion ][ Twilio Callback ]: Preparing to send response to Twilio Client`);
 
-      sendTwilioMessage(gpt4Response, toNumber);
+      await sendTwilioMessage(gpt4Response, toNumber);
     } else {
     const chunks = splitMessage(gpt4Response, 1500);
 
@@ -239,7 +239,7 @@ async function sendResponse(gpt4Response, toNumber) {
 
     for (let i = 0; i < chunks.length; i++) {
       console.log(`Chunk ${chunks[i]}: ${chunks[i]}`);
-      sendTwilioMessage(chunks[i], toNumber);
+      await sendTwilioMessage(chunks[i], toNumber);
       // const params = new URLSearchParams({
       //   From: 'whatsapp:+593994309557',
       //   To: toNumber,
