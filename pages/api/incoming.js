@@ -100,7 +100,9 @@ module.exports = async (req, res) => {
       console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
       const gpt3Response = await getGpt4Response(incomingMessage);
 
-      console.log(`[ Chat Completion ] - OPENAI response received with ${gpt3Response.length} characters: ${gpt3Response}`);
+      const textResponse = gpt3Response.choices[0].message.content;
+      const totalTokens = gpt3Response.usage?.total_tokens;
+      console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
       res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
@@ -109,9 +111,9 @@ module.exports = async (req, res) => {
       //   res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
       // } else {
 
-        console.log(`[ Chat Completion ] - Handling response message with ${gpt3Response.length} characters`);
+        console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
         res.status(204).end();
-        await sendResponse(gpt3Response, fromNumber);
+        await sendResponse(textResponse, fromNumber);
 
         // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
       //}
@@ -168,7 +170,8 @@ async function getGpt4Response(prompt) {
     console.log(`response data choices :****  ${JSON.stringify(response.data.choices)}`);
     console.log(`response data choices message :****  ${JSON.stringify(response.data.choices[0])}`);
 
-    return response.data.choices[0].message.content;
+    return response.data;
+    // return response.data.choices[0].message.content;
   } catch (err) {
     console.error(`[ ERROR ][ Chat Completion ] - Failed to get GPT-4 response, error: ${err}`);
     console.error(`[ ERROR ][ Chat Completion ] - Error message: ${err.message}`);
