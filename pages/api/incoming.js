@@ -163,6 +163,8 @@ async function getGpt4Response(prompt) {
       messages: [{ role: "user", content: prompt }],
     });
 
+    console.log(`response  :****  ${JSON.stringify(response)}`);
+    console.log(`response data :****  ${JSON.stringify(response.data)}`);
     console.log(`response data choices :****  ${JSON.stringify(response.data.choices)}`);
     console.log(`response data choices message :****  ${JSON.stringify(response.data.choices[0])}`);
 
