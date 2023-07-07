@@ -49,7 +49,9 @@ module.exports = async (req, res) => {
       const transcription = await transcribeAudio(incomingMediaUrl);
 
       res.setHeader('Content-Type', 'text/xml');
-      res.send(`<Response><Message>Transcription: ${transcription}</Message></Response>`);
+      // res.send(`<Response><Message>Transcription: ${transcription}</Message></Response>`);
+      res.status(204).end();
+      await sendResponse(transcription, fromNumber);
       console.log(`[ Audio Transcription ] - Response sent`);
 
     } else if (incomingMessage.toLowerCase().includes('image')) {
@@ -220,7 +222,7 @@ async function sendTwilioMessage(gpt4Response, toNumber) {
       throw new Error('Failed to send SMS: ' + errorMessage);
     } else {
       const json = await response.json();
-      console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
+      console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${JSON.stringify(json)}`);
     }
 
   } catch (err) {
