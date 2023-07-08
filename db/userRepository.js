@@ -12,10 +12,10 @@ async function createUser(whatsappNumber, name) {
             [userId, whatsappNumber, name]
         );
         await updateLastSeen(result.id)
-        console.log(`[ Users Database ] - Successfully created user for ${name} with number ${whatsappNumber}. User Id = ${result.id}`);
+        console.log(`[ Users Table ] - Successfully created user for ${name} with number ${whatsappNumber}. User Id = ${result.id}`);
         return result.id;
     } catch (error) {
-        console.error('[ ERROR ][ Users Database ] - Error creating user:', error);
+        console.error('[ ERROR ][ Users Table ] - Error creating user:', error);
         throw error;
     }
 }
@@ -27,14 +27,14 @@ async function getUserByWhatsAppNumber(whatsappNumber) {
             whatsappNumber
         );
         if (user) {
-            console.log(`[ Users Database ] - Successfully retrieved user for number: ${whatsappNumber}: ${user}`);
+            console.log(`[ Users Table ] - Successfully retrieved user for number: ${whatsappNumber}: ${user}`);
         } else {
-            console.log(`[ Users Database ] - No record found for a user with whatsapp number: ${whatsappNumber}`);
+            console.log(`[ Users Table ] - No record found for a user with whatsapp number: ${whatsappNumber}`);
 
         }
         return user;
     } catch (error) {
-        console.error('[ ERROR ][ Users Database ] - Error retrieving user:', error);
+        console.error('[ ERROR ][ Users Table ] - Error retrieving user:', error);
         throw error;
     }
 }
@@ -46,9 +46,9 @@ async function updateLastSeen(userId) {
             `UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = $1`,
             userId
         );
-        console.log(`[ Users Database ] - Successfully updated last seen for user with id ${userId}`);
+        console.log(`[ Users Table ] - Successfully updated last seen for user with id ${userId}`);
     } catch (error) {
-        console.error(`[ ERROR ][ Users Database ] - Error updating last seen for user with id ${userId}: `, error);
+        console.error(`[ ERROR ][ Users Table ] - Error updating last seen for user with id ${userId}: `, error);
         throw error;
     }
 }

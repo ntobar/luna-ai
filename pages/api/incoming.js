@@ -7,6 +7,10 @@ const path = require('path');
 const db = require('../../db/db');
 
 const userRepository = require('../../db/userRepository');
+const conversationRepository = require('../../db/conversationRepository');
+const messageRepository = require('../../db/messageRepository');
+
+
 
 require('dotenv').config();
 
@@ -100,11 +104,55 @@ module.exports = async (req, res) => {
       //End delete
       // Generate a response using OpenAI's GPT-4
       console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
-      const gpt3Response = await getGpt4Response(incomingMessage);
+
+      // Get existing conversation or create a new one for the user
+      let conversationId = await conversationRepository.getConversationId(existingUser.id);
+      if(!conversationId) {
+        conversationId = await conversationRepository.createNewConversation(existingUser.id);
+      }
+
+      const userMessage = {
+        userId: existingUser.id,
+        conversationId: conversationId,
+        role: 'user',
+        content: incomingMessage,
+        tokens: 0
+      }
+      
+
+      const messageId = await messageRepository.storeMessageInTable(userMessage);
+      // Fetch conversation history
+      const conversationHistory = await messageRepository.getConversationHistory(conversationId);
+      const formattedHistory = conversationHistory.map(message => ({role: message.role, content: message.content}));
+
+      console.log(`FORMATTED HISTORY: ${formattedHistory}`);
+
+      // const openAIPrompt = {
+      //   "messages": formattedHistory
+      // }
+
+      // const gpt3Response = await getGpt4Response(incomingMessage);
+      const gpt3Response = await getGpt4Response(formattedHistory);
+
 
       const textResponse = gpt3Response.choices[0].message.content;
+      const promptTokens = gpt3Response.usage?.prompt_tokens;
+      const completionTokens = gpt3Response.usage?.completion_tokens;
       const totalTokens = gpt3Response.usage?.total_tokens;
       console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
+
+      await messageRepository.updateMessageTokens(messageId, promptTokens);
+      // Store messages in db
+      const aiMessage = {
+        userId: existingUser.id,
+        conversationId: conversationId,
+        role: 'assistant',
+        content: textResponse,
+        tokens: completionTokens
+      }
+
+      await messageRepository.storeMessageInTable(aiMessage);
+
 
       res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
@@ -162,9 +210,13 @@ async function getGpt4Response(prompt) {
     });
     const openai = new OpenAIApi(configuration);
 
+    // const response = await openai.createChatCompletion({
+    //   model: "gpt-4",
+    //   messages: [{ role: "user", content: prompt }],
+    // });
     const response = await openai.createChatCompletion({
       model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
+      messages: prompt,
     });
 
     console.log(`response  :****  ${response}`);
