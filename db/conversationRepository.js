@@ -50,8 +50,30 @@ async function updateTokenCount(conversationId, tokenCount) {
     }
 }
 
+async function getConversationTokenCount(conversationId) {
+    try {
+        const result = await db.oneOrNone(`
+            SELECT SUM(token_count) AS total_tokens
+            FROM messages
+            WHERE conversation_id = $1
+        `, [conversationId]);
+
+        if(result) {
+            console.log(`[ Messages Table ] - Successfully retrieved total token count of ${result} for conversation: ${conversationId}`);
+            return result.total_tokens;
+        }
+        
+        return 0;
+    } catch (error) {
+        console.error('[ ERROR ][ Messages Table ] - Error retrieving total token count for conversation:', error);
+        throw error;
+    }
+}
+
+
 module.exports = {
     getConversationId,
     createNewConversation,
-    updateTokenCount
+    updateTokenCount,
+    getConversationTokenCount
 };

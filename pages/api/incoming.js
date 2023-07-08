@@ -154,6 +154,9 @@ module.exports = async (req, res) => {
       await messageRepository.storeMessageInTable(aiMessage);
 
 
+      // After each interaction:
+      const conversationTokenCount = await messageRepository.getConversationTokenCount(conversationId);
+      await conversationRepository.updateTokenCount(conversationId, conversationTokenCount);
       res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
       //   // Send a response back to Twilio
