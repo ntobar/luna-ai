@@ -155,7 +155,7 @@ module.exports = async (req, res) => {
 
 
       // After each interaction:
-      const conversationTokenCount = await messageRepository.getConversationTokenCount(conversationId);
+      const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
       await conversationRepository.updateTokenCount(conversationId, conversationTokenCount);
       res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
