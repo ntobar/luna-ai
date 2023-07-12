@@ -22,6 +22,7 @@ const openai = new OpenAIApi(configuration);
 // START MAIN FUNCTION
 module.exports = async (req, res) => {
   if (req.method === 'POST') {
+    console.log("Received webhook Request, initializing... ");
     // testConnection();
     const incomingMessage = req.body.Body;
     const incomingMediaUrl = req.body.MediaUrl0;
@@ -40,7 +41,20 @@ module.exports = async (req, res) => {
       // User doesn't exist, create new user
       const userId = await userRepository.createUser(whatsappNumber, profileName);
       existingUser = { id: userId };
+      const welcomeText = `Hi ${profile}! Welcome to Luna, your personalized chat assistant. I'm here to 
+      help you with anything you need, whether its on-the-go or with dedicated solutions. Some things you should know to improve your chatting experience, I can remember
+      past conversations, so If you have mentioned information in the past and need to access that or as context,
+      I have that ability.`
     }
+
+    // Commands:
+    // !image
+    // !vn
+    // !commands
+    // !tag
+    // !createtag veterinario
+    // !veterinario determines the type of context it has
+    //  Tags, /remember, /important
 
 
     // console.log("****** REQ: ", req);
@@ -407,5 +421,9 @@ async function transcribeAudio(mediaUrl) {
     console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Failed to transcribe audio, error: ${err}`);
     console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Error message: ${err.message}`);
     throw err;
+  }
+
+  async function handleTag(tag) {
+
   }
 }
