@@ -120,6 +120,7 @@ module.exports = async (req, res) => {
       console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
 
       let gpt3Response;
+      let messageId;
       if(!incomingMessage.toLowerCase().includes('!notag')) {
       // Get existing conversation or create a new one for the user
       let conversationId = await conversationRepository.getConversationId(existingUser.id);
@@ -136,7 +137,7 @@ module.exports = async (req, res) => {
       }
       
 
-      const messageId = await messageRepository.storeMessageInTable(userMessage);
+      messageId = await messageRepository.storeMessageInTable(userMessage);
       // Fetch conversation history
       const conversationHistory = await messageRepository.getConversationHistory(conversationId);
       const formattedHistory = conversationHistory.map(message => ({role: message.role, content: message.content}));
@@ -160,7 +161,10 @@ module.exports = async (req, res) => {
       const totalTokens = gpt3Response.usage?.total_tokens;
       console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
+      if(incomingMessage.toLowerCase().includes('!notag')) {
+      if(messageId) {
       await messageRepository.updateMessageTokens(messageId, promptTokens);
+      }
       // Store messages in db
       const aiMessage = {
         userId: existingUser.id,
@@ -176,6 +180,7 @@ module.exports = async (req, res) => {
       // After each interaction:
       const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
       await conversationRepository.updateTokenCount(conversationId, conversationTokenCount);
+    }
       res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
       //   // Send a response back to Twilio
