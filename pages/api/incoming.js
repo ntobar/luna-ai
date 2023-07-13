@@ -5,12 +5,13 @@ const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
 const path = require('path');
 const db = require('../../db/db');
-var franc = require('franc-min');
+const franc = require('franc-min');
 
 const userRepository = require('../../db/userRepository');
 const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
+import { constants } from 'http2';
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
 
 
