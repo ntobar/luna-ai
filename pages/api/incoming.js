@@ -119,6 +119,8 @@ module.exports = async (req, res) => {
       // Generate a response using OpenAI's GPT-4
       console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
 
+      let gpt3Response;
+      if(!incomingMessage.toLowerCase().includes('!notag')) {
       // Get existing conversation or create a new one for the user
       let conversationId = await conversationRepository.getConversationId(existingUser.id);
       if(!conversationId) {
@@ -146,7 +148,10 @@ module.exports = async (req, res) => {
       // }
 
       // const gpt3Response = await getGpt4Response(incomingMessage);
-      const gpt3Response = await getGpt4Response(formattedHistory);
+      gpt3Response = await getGpt4Response(formattedHistory, true);
+    } else {
+      gpt3Response = await getGpt4Response(incomingMessage, false);
+    }
 
 
       const textResponse = gpt3Response.choices[0].message.content;
@@ -219,7 +224,7 @@ async function getGpt3Response2(prompt) {
   return response.data.choices[0].text.trim();
 }
 
-async function getGpt4Response(prompt) {
+async function getGpt4Response(prompt, history) {
   try {
     console.log(`[ Chat Completion ] - Sending request to openai api with prompt: ${prompt}`);
     const configuration = new Configuration({
@@ -227,14 +232,18 @@ async function getGpt4Response(prompt) {
     });
     const openai = new OpenAIApi(configuration);
 
-    // const response = await openai.createChatCompletion({
-    //   model: "gpt-4",
-    //   messages: [{ role: "user", content: prompt }],
-    // });
-    const response = await openai.createChatCompletion({
+    let response;
+    if(!history) {
+    response = await openai.createChatCompletion({
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+    });
+    } else {
+    response = await openai.createChatCompletion({
       model: "gpt-4",
       messages: prompt,
     });
+  }
 
     console.log(`response  :****  ${response}`);
     console.log(`response data :****  ${JSON.stringify(response.data)}`);
