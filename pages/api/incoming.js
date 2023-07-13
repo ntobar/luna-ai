@@ -11,7 +11,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-// import { detect } from 'langdetect';
+import { detect } from 'langdetect';
 
 
 require('dotenv').config();
@@ -115,13 +115,13 @@ module.exports = async (req, res) => {
         });
     } else {
 
-      // const language = detect(incomingMessage);
-      // let welcomeText;
-      // if (language === 'en') {
-      //   welcomeText = englishWelcomeMessage[0];
-      // } else if (language === 'es') {
-      //   welcomeText = spanishWelcomeMessage[0];
-      // }
+      const language = detect(incomingMessage);
+      let welcomeText;
+      if (language === 'en') {
+        welcomeText = englishWelcomeMessage[0];
+      } else if (language === 'es') {
+        welcomeText = spanishWelcomeMessage[0];
+      }
       //End delete
       // Generate a response using OpenAI's GPT-4
       console.log(`[ Chat Completion ] - Request received in language ${language} with prompt: ${incomingMessage}`);
@@ -198,8 +198,8 @@ module.exports = async (req, res) => {
       // } else {
 
         console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
-        res.status(204).end();
-        // res.send(`<Response><Message>${welcomeText}</Message></Response>`);
+        // res.status(204).end();
+        res.send(`<Response><Message>${welcomeText}</Message></Response>`);
 
         await sendResponse(textResponse, fromNumber);
 
