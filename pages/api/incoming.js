@@ -11,7 +11,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-import { franc, francAll } from 'franc';
+import { detect } from 'langdetect';
 
 
 require('dotenv').config();
@@ -115,11 +115,11 @@ module.exports = async (req, res) => {
         });
     } else {
 
-      const language = franc(incomingMessage);
+      const language = detect(incomingMessage);
       let welcomeText;
-      if (language === 'eng') {
+      if (language === 'en') {
         welcomeText = englishWelcomeMessage[0];
-      } else if (language === 'spa') {
+      } else if (language === 'es') {
         welcomeText = spanishWelcomeMessage[0];
       }
       //End delete

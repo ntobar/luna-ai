@@ -24,6 +24,7 @@
     "framer-motion": "^7.6.7",
     "franc": "^6.1.0",
     "franc-min": "^6.1.0",
+    "langdetect": "^0.2.1",
     "next": "^13.4.4",
     "openai": "^3.2.1",
     "openai-edge": "^1.0.0",
