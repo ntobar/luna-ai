@@ -11,7 +11,8 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-import { detect } from 'langdetect';
+// import { detect } from 'langdetect';
+const langdetect = require('langdetect');
 
 
 require('dotenv').config();
@@ -115,12 +116,12 @@ module.exports = async (req, res) => {
         });
     } else {
 
-      const language = detect(incomingMessage);
+      const language = langdetect.detectOne(incomingMessage);
       let welcomeText;
       if (language === 'en') {
-        welcomeText = englishWelcomeMessage[0];
+        welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
       } else if (language === 'es') {
-        welcomeText = spanishWelcomeMessage[0];
+        welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName);
       }
       //End delete
       // Generate a response using OpenAI's GPT-4
