@@ -121,9 +121,10 @@ module.exports = async (req, res) => {
 
       let gpt3Response;
       let messageId;
+      let conversationId;
       if(!incomingMessage.toLowerCase().includes('!notag')) {
       // Get existing conversation or create a new one for the user
-      let conversationId = await conversationRepository.getConversationId(existingUser.id);
+      conversationId = await conversationRepository.getConversationId(existingUser.id);
       if(!conversationId) {
         conversationId = await conversationRepository.createNewConversation(existingUser.id);
       }
