@@ -5,10 +5,13 @@ const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
 const path = require('path');
 const db = require('../../db/db');
+var franc = require('franc-min');
 
 const userRepository = require('../../db/userRepository');
 const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
+
+import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
 
 
 
@@ -29,6 +32,7 @@ module.exports = async (req, res) => {
     const fromNumber = req.body.From;
     const profileName = req.body.ProfileName;
 
+
     // Database handling
     const whatsappNumber = fromNumber.replace('whatsapp:', '');
     // Check if the user exists
@@ -41,10 +45,6 @@ module.exports = async (req, res) => {
       // User doesn't exist, create new user
       const userId = await userRepository.createUser(whatsappNumber, profileName);
       existingUser = { id: userId };
-      const welcomeText = `Hi ${profile}! Welcome to Luna, your personalized chat assistant. I'm here to 
-      help you with anything you need, whether its on-the-go or with dedicated solutions. Some things you should know to improve your chatting experience, I can remember
-      past conversations, so If you have mentioned information in the past and need to access that or as context,
-      I have that ability.`
     }
 
     // Commands:
@@ -115,9 +115,18 @@ module.exports = async (req, res) => {
           // res.status(500).send({ error: err.message });  // send a response
         });
     } else {
+
+      const language = franc(incomingMessage);
+      let welcomeText;
+      if (language === 'eng') {
+        welcomeText = englishWelcomeMessage[0];
+      } else if (language === 'spa') {
+        welcomeText = spanishWelcomeMessage[0];
+      }
       //End delete
       // Generate a response using OpenAI's GPT-4
-      console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
+      console.log(`[ Chat Completion ] - Request received in language ${language} with prompt: ${incomingMessage}`);
+
 
       let gpt3Response;
       let messageId;
@@ -190,7 +199,9 @@ module.exports = async (req, res) => {
       // } else {
 
         console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
-        res.status(204).end();
+        // res.status(204).end();
+        res.send(`<Response><Message>${welcomeText}</Message></Response>`);
+
         await sendResponse(textResponse, fromNumber);
 
         // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
