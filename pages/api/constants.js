@@ -8,6 +8,13 @@
 
 
 export const englishWelcomeMessage = [
+    `👋 Hey there {profile}! Buckle up 🚀, because you've just hit the AI jackpot! 🎰 Welcome to the one and only Luna - part personal assistant 🗂, part stand-up comedian 🎭, and full-time life-enhancer 🌈.
+
+    I'm here to answer your queries 💡, generate images 🎨, transcribe audio 🎵, and even remember our past chats 💬. Yep, you heard it right, I've got the memory of an elephant 🐘 and the speed of a cheetah 🐆.
+    
+    So, whether you need to transcribe your snoring sounds 😴, generate images of a three-legged unicorn 🦄, or recall that one time you asked about the meaning of life 🌍, Luna's got you covered!
+    
+    Hang tight, and enjoy this wild ride through the Luna universe! 🌌`,
     `Hey there {profile}! Buckle up, because you've just hit the AI jackpot! Welcome to the one and only Luna - part personal assistant, part stand-up comedian, and full-time life-enhancer.
 
 I'm here to answer your queries, generate images, transcribe audio, and even remember our past chats. Yep, you heard it right, I've got the memory of an elephant and the speed of a cheetah.
