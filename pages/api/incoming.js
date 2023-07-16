@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
       let welcomeText;
 
       if (language) {
+        console.log(`[ Incoming Request ] - Request received in language: ${language}`);
         if (language === 'en') {
           welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
         } else if (language === 'es') {
@@ -145,7 +146,7 @@ module.exports = async (req, res) => {
       // }
       //End delete
       // Generate a response using OpenAI's GPT-4
-      console.log(`[ Chat Completion ] - Request received in language ${language} with prompt: ${incomingMessage}`);
+      console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
 
 
       let gpt3Response;
