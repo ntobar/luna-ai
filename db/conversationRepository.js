@@ -50,9 +50,24 @@ async function updateTokenCount(conversationId, tokenCount) {
     }
 }
 
+async function deleteConversation(conversationId) {
+    try {
+        await db.none(`
+          DELETE FROM conversations
+          WHERE id = $1
+        `, [conversationId]);
+        console.log(`[ Conversation Table ] - Successfully deleted conversation: ${conversationId}`);
+    } catch (error) {
+        console.error(`[ ERROR ][ Conversation Table ] - Error deleting conversation: ${conversationId}:`, error);
+        throw error;
+    }
+}
+
+
 
 module.exports = {
     getConversationId,
     createNewConversation,
-    updateTokenCount
+    updateTokenCount,
+    deleteConversation
 };

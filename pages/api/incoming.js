@@ -41,10 +41,25 @@ module.exports = async (req, res) => {
     if (existingUser) {
       // User already exists, update last_seen
       await userRepository.updateLastSeen(existingUser.id);
+      res.status(204).end();
     } else {
       // User doesn't exist, create new user
       const userId = await userRepository.createUser(whatsappNumber, profileName);
       existingUser = { id: userId };
+      const language = langdetect.detectOne(incomingMessage);
+      let welcomeText;
+
+      if (language) {
+        if (language === 'en') {
+          welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
+        } else if (language === 'es') {
+          welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName);
+        }
+      } else {
+        welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
+      }
+      res.setHeader('Content-Type', 'text/xml');
+      res.send(`<Response><Message>${welcomeText}</Message></Response>`);
     }
 
     // Commands:
@@ -116,13 +131,18 @@ module.exports = async (req, res) => {
         });
     } else {
 
-      const language = langdetect.detectOne(incomingMessage);
-      let welcomeText;
-      if (language === 'en') {
-        welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
-      } else if (language === 'es') {
-        welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName);
-      }
+      // const language = langdetect.detectOne(incomingMessage);
+      // let welcomeText;
+
+      // if (language) {
+      //   if (language === 'en') {
+      //     welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
+      //   } else if (language === 'es') {
+      //     welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName);
+      //   }
+      // } else {
+      //   welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
+      // }
       //End delete
       // Generate a response using OpenAI's GPT-4
       console.log(`[ Chat Completion ] - Request received in language ${language} with prompt: ${incomingMessage}`);
@@ -131,38 +151,38 @@ module.exports = async (req, res) => {
       let gpt3Response;
       let messageId;
       let conversationId;
-      if(!incomingMessage.toLowerCase().includes('!notag')) {
-      // Get existing conversation or create a new one for the user
-      conversationId = await conversationRepository.getConversationId(existingUser.id);
-      if(!conversationId) {
-        conversationId = await conversationRepository.createNewConversation(existingUser.id);
+      if (!incomingMessage.toLowerCase().includes('!notag')) {
+        // Get existing conversation or create a new one for the user
+        conversationId = await conversationRepository.getConversationId(existingUser.id);
+        if (!conversationId) {
+          conversationId = await conversationRepository.createNewConversation(existingUser.id);
+        }
+
+        const userMessage = {
+          userId: existingUser.id,
+          conversationId: conversationId,
+          role: 'user',
+          content: incomingMessage,
+          tokens: 0
+        }
+
+
+        messageId = await messageRepository.storeMessageInTable(userMessage);
+        // Fetch conversation history
+        const conversationHistory = await messageRepository.getConversationHistory(conversationId);
+        const formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
+
+        console.log(`FORMATTED HISTORY: ${formattedHistory}`);
+
+        // const openAIPrompt = {
+        //   "messages": formattedHistory
+        // }
+
+        // const gpt3Response = await getGpt4Response(incomingMessage);
+        gpt3Response = await getGpt4Response(formattedHistory, true);
+      } else {
+        gpt3Response = await getGpt4Response(incomingMessage, false);
       }
-
-      const userMessage = {
-        userId: existingUser.id,
-        conversationId: conversationId,
-        role: 'user',
-        content: incomingMessage,
-        tokens: 0
-      }
-      
-
-      messageId = await messageRepository.storeMessageInTable(userMessage);
-      // Fetch conversation history
-      const conversationHistory = await messageRepository.getConversationHistory(conversationId);
-      const formattedHistory = conversationHistory.map(message => ({role: message.role, content: message.content}));
-
-      console.log(`FORMATTED HISTORY: ${formattedHistory}`);
-
-      // const openAIPrompt = {
-      //   "messages": formattedHistory
-      // }
-
-      // const gpt3Response = await getGpt4Response(incomingMessage);
-      gpt3Response = await getGpt4Response(formattedHistory, true);
-    } else {
-      gpt3Response = await getGpt4Response(incomingMessage, false);
-    }
 
 
       const textResponse = gpt3Response.choices[0].message.content;
@@ -171,40 +191,40 @@ module.exports = async (req, res) => {
       const totalTokens = gpt3Response.usage?.total_tokens;
       console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
-      if(incomingMessage.toLowerCase().includes('!notag')) {
-      if(messageId) {
-      await messageRepository.updateMessageTokens(messageId, promptTokens);
+      if (incomingMessage.toLowerCase().includes('!notag')) {
+        if (messageId) {
+          await messageRepository.updateMessageTokens(messageId, promptTokens);
+        }
+        // Store messages in db
+        const aiMessage = {
+          userId: existingUser.id,
+          conversationId: conversationId,
+          role: 'assistant',
+          content: textResponse,
+          tokens: completionTokens
+        }
+
+        await messageRepository.storeMessageInTable(aiMessage);
+
+
+        // After each interaction:
+        const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+        await conversationRepository.updateTokenCount(conversationId, conversationTokenCount);
       }
-      // Store messages in db
-      const aiMessage = {
-        userId: existingUser.id,
-        conversationId: conversationId,
-        role: 'assistant',
-        content: textResponse,
-        tokens: completionTokens
-      }
-
-      await messageRepository.storeMessageInTable(aiMessage);
-
-
-      // After each interaction:
-      const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-      await conversationRepository.updateTokenCount(conversationId, conversationTokenCount);
-    }
-      res.setHeader('Content-Type', 'text/xml');
+      // res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
       //   // Send a response back to Twilio
       //   console.log(`[ Chat Completion ] - Message length has less than 1500 characters, sending response`)
       //   res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
       // } else {
 
-        console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
-        // res.status(204).end();
-        res.send(`<Response><Message>${welcomeText}</Message></Response>`);
+      console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
+      // res.status(204).end();
+      // res.send(`<Response><Message>${welcomeText}</Message></Response>`);
 
-        await sendResponse(textResponse, fromNumber);
+      await sendResponse(textResponse, fromNumber);
 
-        // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
+      // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
       //}
     }
   }
@@ -250,17 +270,17 @@ async function getGpt4Response(prompt, history) {
     const openai = new OpenAIApi(configuration);
 
     let response;
-    if(!history) {
-    response = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
-    });
+    if (!history) {
+      response = await openai.createChatCompletion({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+      });
     } else {
-    response = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: prompt,
-    });
-  }
+      response = await openai.createChatCompletion({
+        model: "gpt-4",
+        messages: prompt,
+      });
+    }
 
     console.log(`response  :****  ${response}`);
     console.log(`response data :****  ${JSON.stringify(response.data)}`);
@@ -330,44 +350,44 @@ async function sendResponse(gpt4Response, toNumber) {
 
 
 
-    if(gpt4Response.length < 1500) {
+    if (gpt4Response.length < 1500) {
       console.log(`[ Chat Completion ][ Twilio Callback ]: Preparing to send response to Twilio Client`);
 
       await sendTwilioMessage(gpt4Response, toNumber);
     } else {
-    const chunks = splitMessage(gpt4Response, 1500);
+      const chunks = splitMessage(gpt4Response, 1500);
 
-    console.log(`[ Chat Completion ][ Twilio Callback ]: Split text, preparing to send ${chunks.length} messages to Twilio Client`);
-    // const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    // const authToken = process.env.TWILIO_AUTH_TOKEN;
+      console.log(`[ Chat Completion ][ Twilio Callback ]: Split text, preparing to send ${chunks.length} messages to Twilio Client`);
+      // const accountSid = process.env.TWILIO_ACCOUNT_SID;
+      // const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-    for (let i = 0; i < chunks.length; i++) {
-      console.log(`Chunk ${chunks[i]}: ${chunks[i]}`);
-      await sendTwilioMessage(chunks[i], toNumber);
-      // const params = new URLSearchParams({
-      //   From: 'whatsapp:+593994309557',
-      //   To: toNumber,
-      //   Body: chunks[i],
-      // }).toString();
-      // const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/x-www-form-urlencoded',
-      //     'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
-      //   },
-      //   body: params
-      // });
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(`Chunk ${chunks[i]}: ${chunks[i]}`);
+        await sendTwilioMessage(chunks[i], toNumber);
+        // const params = new URLSearchParams({
+        //   From: 'whatsapp:+593994309557',
+        //   To: toNumber,
+        //   Body: chunks[i],
+        // }).toString();
+        // const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/x-www-form-urlencoded',
+        //     'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
+        //   },
+        //   body: params
+        // });
 
-      // if (!response.ok) {
-      //   const errorMessage = await response.text();
-      //   console.log('Failed to send SMS: ', errorMessage);
-      //   throw new Error('Failed to send SMS: ' + errorMessage);
-      // } else {
-      //   const json = await response.json();
-      //   console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
-      // }
+        // if (!response.ok) {
+        //   const errorMessage = await response.text();
+        //   console.log('Failed to send SMS: ', errorMessage);
+        //   throw new Error('Failed to send SMS: ' + errorMessage);
+        // } else {
+        //   const json = await response.json();
+        //   console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
+        // }
+      }
     }
-  }
   } catch (err) {
     console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Failed to send messages to Twilio client, error: ${err}`);
     console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Error message: ${err.message}`);
