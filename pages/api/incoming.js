@@ -152,13 +152,17 @@ module.exports = async (req, res) => {
       let gpt3Response;
       let messageId;
       let conversationId;
-      if (!incomingMessage.toLowerCase().includes('!notag')) {
+    
+      // If we want context, message doesnt have !notag
+      if (!incomingMessage.toLowerCase().includes('!notag')) { 
+
         // Get existing conversation or create a new one for the user
         conversationId = await conversationRepository.getConversationId(existingUser.id);
         if (!conversationId) {
           conversationId = await conversationRepository.createNewConversation(existingUser.id);
         }
 
+        // Format user message for database
         const userMessage = {
           userId: existingUser.id,
           conversationId: conversationId,
@@ -167,13 +171,14 @@ module.exports = async (req, res) => {
           tokens: 0
         }
 
-
+        // Store user message
         messageId = await messageRepository.storeMessageInTable(userMessage);
-        // Fetch conversation history
+
+        // Fetch conversation history and format it
         const conversationHistory = await messageRepository.getConversationHistory(conversationId);
         const formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
-        console.log(`FORMATTED HISTORY: ${formattedHistory}`);
+        console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
 
         // const openAIPrompt = {
         //   "messages": formattedHistory
@@ -192,7 +197,8 @@ module.exports = async (req, res) => {
       const totalTokens = gpt3Response.usage?.total_tokens;
       console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
-      if (incomingMessage.toLowerCase().includes('!notag')) {
+      // We want to save messages if it doesnt include !notag
+      if (!incomingMessage.toLowerCase().includes('!notag')) {
         if (messageId) {
           await messageRepository.updateMessageTokens(messageId, promptTokens);
         }

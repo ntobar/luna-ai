@@ -8,7 +8,9 @@
 
 
 export const englishWelcomeMessage = [
-    `👋 Hey there {profile}! Buckle up 🚀, because you've just hit the AI jackpot! 🎰 Welcome to the one and only Luna - part personal assistant 🗂, part stand-up comedian 🎭, and full-time life-enhancer 🌈.
+    `👋 Hey there {profile}! I've received your request!
+    
+    Buckle up 🚀, because you've just hit the AI jackpot! 🎰 Welcome to the one and only Luna - part personal assistant 🗂, part stand-up comedian 🎭, and full-time life-enhancer 🌈.
 
     I'm here to answer your queries 💡, generate images 🎨, transcribe audio 🎵, and even remember our past chats 💬. Yep, you heard it right, I've got the memory of an elephant 🐘 and the speed of a cheetah 🐆.
     
