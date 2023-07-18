@@ -11,6 +11,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
+import { encode, decode, encodeChat, isWithinTokenLimit } from 'gpt-tokenizer';
 // import { detect } from 'langdetect';
 const langdetect = require('langdetect');
 
@@ -82,9 +83,9 @@ module.exports = async (req, res) => {
       console.log(`[ Audio Transcription  ] - Request received for media with url ${incomingMediaUrl}`);
       const transcription = await transcribeAudio(incomingMediaUrl);
 
-      res.setHeader('Content-Type', 'text/xml');
+      //res.setHeader('Content-Type', 'text/xml');
       // res.send(`<Response><Message>Transcription: ${transcription}</Message></Response>`);
-      res.status(204).end();
+      //res.status(204).end();
       await sendResponse(transcription, fromNumber);
       console.log(`[ Audio Transcription ] - Response sent`);
 
@@ -132,6 +133,9 @@ module.exports = async (req, res) => {
         });
     } else {
 
+      const MAX_SUMMARIZATION_ITERATIONS = 5;
+      let summarizationCount = 0;
+
       // const language = langdetect.detectOne(incomingMessage);
       // let welcomeText;
 
@@ -152,9 +156,9 @@ module.exports = async (req, res) => {
       let gpt3Response;
       let messageId;
       let conversationId;
-    
+
       // If we want context, message doesnt have !notag
-      if (!incomingMessage.toLowerCase().includes('!notag')) { 
+      if (!incomingMessage.toLowerCase().includes('!notag')) {
 
         // Get existing conversation or create a new one for the user
         conversationId = await conversationRepository.getConversationId(existingUser.id);
@@ -175,10 +179,31 @@ module.exports = async (req, res) => {
         messageId = await messageRepository.storeMessageInTable(userMessage);
 
         // Fetch conversation history and format it
-        const conversationHistory = await messageRepository.getConversationHistory(conversationId);
-        const formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
+        let conversationHistory = await messageRepository.getConversationHistory(conversationId);
+        let formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
-        console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
+        let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+
+        let totalContextTokenCount = encodeChat(formattedHistory);
+        // Perform recursive summarization
+        while (totalContextTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+          // Perform your summarization on formattedHistory here.
+          // Be sure to reassign the result back to formattedHistory.
+          const summarizationResult = await summarizeHistory(formattedHistory);
+          formattedHistory = summarizationResult.summarizedHistory;
+
+          // Increase the summarization count
+          summarizationCount++;
+
+          // Calculate the token count after summarization
+          totalContextTokenCount = encodeChat(formattedHistory);
+
+          //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
+        }
+
+        await messageRepository.updateMessageTokens(messageId, totalContextTokenCount);
+
+        // console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
 
         // const openAIPrompt = {
         //   "messages": formattedHistory
@@ -236,6 +261,40 @@ module.exports = async (req, res) => {
     }
   }
 };
+
+async function summarizeHistory(formattedHistory) {
+  // Combine all the conversation history into one text
+  const historyText = formattedHistory.reduce((acc, message) => {
+    return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
+  }, '');
+
+  // ${formattedHistory.map(message => `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}`).join('\n')}
+
+  const prompt = `
+I have a conversation with important details that I need to be summarized concisely while preserving the key points and relevant information. Here is the conversation:
+${historyText} 
+
+Please provide a summarized version of this conversation.`;
+
+
+  // Create the OpenAI prompt
+  // const prompt = `Please summarize the following conversation:\n${historyText}`;
+
+  // Call the OpenAI API with the prompt
+  const gptResponse = await getGpt4Response(prompt, false);
+
+  // Extract the summary from the GPT response
+  const summary = gptResponse.choices[0].message.content;
+
+  // Convert the summary into the correct format
+  const formattedSummary = {
+    role: 'assistant',
+    content: summary
+  };
+
+  // Return the formatted summary
+  return { summarizedHistory: [formattedSummary], tokenCount: gptResponse.usage?.prompt_tokens };
+}
 
 async function testConnection() {
   try {
