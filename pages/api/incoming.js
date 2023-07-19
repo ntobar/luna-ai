@@ -184,7 +184,7 @@ module.exports = async (req, res) => {
 
         let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
 
-        let totalContextTokenCount = encodeChat(formattedHistory);
+        let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
         // Perform recursive summarization
         while (totalContextTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
           // Perform your summarization on formattedHistory here.
