@@ -11,11 +11,10 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-import { encode, decode, encodeChat, isWithinTokenLimit } from 'gpt-tokenizer';
+import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer';
 // const { encodeChat } = require('gpt-tokenizer');
 // import { detect } from 'langdetect';
 const langdetect = require('langdetect');
-
 
 require('dotenv').config();
 
@@ -185,8 +184,10 @@ module.exports = async (req, res) => {
 
         let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
 
+        const tokenizer = new Tokenizer({ modelName: 'gpt-4-32k' });
+
         // let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
-        let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
+        let totalContextTokenCount = encodeChat(formattedHistory, tokenizer);
 
         console.log("TOTAL TOKEN COUNT LINE 188: ", totalContextTokenCount);
         // Perform recursive summarization
