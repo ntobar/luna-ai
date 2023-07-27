@@ -11,8 +11,8 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-// import { encode, decode, encodeChat, isWithinTokenLimit } from 'gpt-tokenizer';
-const { encodeChat } = require('gpt-tokenizer');
+import { encode, decode, encodeChat, isWithinTokenLimit } from 'gpt-tokenizer';
+// const { encodeChat } = require('gpt-tokenizer');
 // import { detect } from 'langdetect';
 const langdetect = require('langdetect');
 
@@ -186,7 +186,7 @@ module.exports = async (req, res) => {
         let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
 
         // let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
-        let totalContextTokenCount = encodeChat(formattedHistory);
+        let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
 
         console.log("TOTAL TOKEN COUNT LINE 188: ", totalContextTokenCount);
         // Perform recursive summarization
