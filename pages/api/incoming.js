@@ -11,7 +11,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-import { encode, decode, encodeChat, isWithinTokenLimit } from 'gpt-tokenizer/src/model/gpt-4-32k';
+import { encode, decode, encodeChat, isWithinTokenLimit } from 'gpt-tokenizer/esm/model/gpt-4-32k';
 // import { detect } from 'langdetect';
 const langdetect = require('langdetect');
 
