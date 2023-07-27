@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
 
       // Generate a response using OpenAI's GPT-4
       console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
-      const formattedHistory = conversationHistory.map(message => ({role: message.role, content: message.content}));
+      const formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
       const openAIPrompt = {
         "messages": formattedHistory,
@@ -75,3 +75,32 @@ module.exports = async (req, res) => {
     }
   }
 };
+
+
+async function generateImage(imagePrompt) {
+  // Initialize Twilio Client:
+  const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+  console.log(`[ Image Generation ] - Sending request to OPENAI API`);
+
+  // Generate an image based on the message body
+  const imageResult = await openai.createImage({
+    prompt: imagePrompt,
+    size: "256x256",
+  });
+
+  console.log(`[ Image Generation ] - OPENAI response received, image url: ${imageResult.data.data[0].url}`);
+  console.log(`[ Image Generation ] - Sending image to Twilio Client`);
+
+  await client.messages
+  .create({
+    mediaUrl: [`${imageResult.data.data[0].url}`],
+    from: 'whatsapp:+593994309557',
+    // to: `whatsapp:${fromNumber}`
+    to: fromNumber
+
+  });
+
+  console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
+
+}

@@ -338,7 +338,7 @@ async function getGpt4Response(prompt, history) {
     let response;
     if (!history) {
       response = await openai.createChatCompletion({
-        model: "gpt-4",
+        model: "gpt-4-32k",
         messages: [{ role: "user", content: prompt }],
       });
     } else {
