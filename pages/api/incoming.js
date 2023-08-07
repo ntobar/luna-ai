@@ -208,7 +208,7 @@ module.exports = async (req, res) => {
         //   //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
         // }
 
-        await messageRepository.updateMessageTokens(messageId, totalContextTokenCount);
+        // await messageRepository.updateMessageTokens(messageId, totalContextTokenCount);
 
         // console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
 
