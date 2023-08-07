@@ -43,8 +43,7 @@ async function getGpt3Response(prompt) {
     return response.data.choices[0].text.trim();
 }
 
-// Start the server
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
