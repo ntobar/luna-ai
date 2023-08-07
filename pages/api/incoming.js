@@ -11,7 +11,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer';
+// import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer';
 // const { encodeChat } = require('gpt-tokenizer');
 // import { detect } from 'langdetect';
 const langdetect = require('langdetect');
@@ -175,34 +175,34 @@ module.exports = async (req, res) => {
           tokens: 0
         }
 
-        // Store user message
-        messageId = await messageRepository.storeMessageInTable(userMessage);
+        // // Store user message
+        // messageId = await messageRepository.storeMessageInTable(userMessage);
 
-        // Fetch conversation history and format it
-        let conversationHistory = await messageRepository.getConversationHistory(conversationId);
-        let formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
+        // // Fetch conversation history and format it
+        // let conversationHistory = await messageRepository.getConversationHistory(conversationId);
+        // let formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
-        let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+        // let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
 
-        const tokenizer = new Tokenizer({ modelName: 'gpt-4-32k' });
+        // const tokenizer = new Tokenizer({ modelName: 'gpt-4-32k' });
 
-        // let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
-        let totalContextTokenCount = encodeChat(formattedHistory, tokenizer);
+        // // let totalContextTokenCount = encodeChat(formattedHistory, "gpt-4-32k");
+        // let totalContextTokenCount = encodeChat(formattedHistory, tokenizer);
 
-        console.log("TOTAL TOKEN COUNT LINE 188: ", totalContextTokenCount);
-        // Perform recursive summarization
-        while (totalContextTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
-          // Perform your summarization on formattedHistory here.
-          // Be sure to reassign the result back to formattedHistory.
-          const summarizationResult = await summarizeHistory(formattedHistory);
-          formattedHistory = summarizationResult.summarizedHistory;
+        // console.log("TOTAL TOKEN COUNT LINE 188: ", totalContextTokenCount);
+        // // Perform recursive summarization
+        // while (totalContextTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+        //   // Perform your summarization on formattedHistory here.
+        //   // Be sure to reassign the result back to formattedHistory.
+        //   const summarizationResult = await summarizeHistory(formattedHistory);
+        //   formattedHistory = summarizationResult.summarizedHistory;
 
-          // Increase the summarization count
-          summarizationCount++;
+        //   // Increase the summarization count
+        //   summarizationCount++;
 
-          // Calculate the token count after summarization
-          totalContextTokenCount = encodeChat(formattedHistory);
-          console.log("TOTAL TOKEN COUNT LINE 201: ", totalContextTokenCount);
+        //   // Calculate the token count after summarization
+        //   totalContextTokenCount = encodeChat(formattedHistory);
+        //   console.log("TOTAL TOKEN COUNT LINE 201: ", totalContextTokenCount);
 
 
           //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
