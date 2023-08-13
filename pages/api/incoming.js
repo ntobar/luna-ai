@@ -191,7 +191,7 @@ module.exports = async (req, res) => {
         // let totalContextTokenCount = encodeChat(formattedHistory, tokenizer);
         // let totalContextTokenCount = encode()
 
-        // console.log("TOTAL TOKEN COUNT LINE 188: ", totalContextTokenCount);
+        console.log("TOTAL TOKEN COUNT LINE 194: ", totalConversationTokenCount);
         // Perform recursive summarization
         while (totalConversationTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
           // Perform your summarization on formattedHistory here.
