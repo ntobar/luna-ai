@@ -372,8 +372,11 @@ async function getGpt4Response(prompt, history) {
     return response.data;
     // return response.data.choices[0].message.content;
   } catch (err) {
+    
     console.error(`[ ERROR ][ Chat Completion ] - Failed to get GPT-4 response, error: ${err}`);
     console.error(`[ ERROR ][ Chat Completion ] - Error message: ${err.message}`);
+    res.status(400).json({ error: 'Sorry, openai GPT failed, not Luna, please try again later.' });
+
 
     throw err;
   }
