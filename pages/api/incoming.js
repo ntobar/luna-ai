@@ -350,7 +350,7 @@ async function getGpt4Response(prompt, history) {
       });
     } else {
       response = await openai.createChatCompletion({
-        model: "gpt-4",
+        model: "gpt-4-32k",
         messages: prompt,
       });
     }
