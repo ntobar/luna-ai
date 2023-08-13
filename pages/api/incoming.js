@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
       console.log(`[ Image Generation ] - Sending image to Twilio Client`);
 
 
-      res.setHeader('Content-Type', 'image/png');
+      // res.setHeader('Content-Type', 'image/png');
       console.log("AFTER setting header for image content type **** ");
       // Send the image URL back to the user
       await client.messages
