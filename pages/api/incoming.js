@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
         })
         .then(message => {
           console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
-          res.status(200).send({ sid: message.sid });  // send a response
+          // res.status(200).send({ sid: message.sid });  // send a response
         })
         .catch(err => {
           console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
