@@ -112,6 +112,7 @@ module.exports = async (req, res) => {
 
 
       res.setHeader('Content-Type', 'image/png');
+      console.log("AFTER setting header for image content type **** ");
       // Send the image URL back to the user
       await client.messages
         .create({
