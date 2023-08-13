@@ -281,9 +281,7 @@ async function summarizeHistory(formattedHistory) {
 
   const prompt = `
 I have a conversation with important details that I need to be summarized concisely while preserving the key points and relevant information. Here is the conversation:
-${historyText} 
-
-Please provide a summarized version of this conversation.`;
+${historyText}  Please provide a summarized version of this conversation.`;
 
 
   // Create the OpenAI prompt
