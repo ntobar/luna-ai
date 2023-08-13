@@ -337,10 +337,12 @@ async function getGpt3Response2(prompt) {
 async function getGpt4Response(prompt, history) {
   try {
     console.log(`[ Chat Completion ] - Sending request to openai api with prompt: ${prompt}`);
+    console.log("OPENAI KEY: ", process.env.OPENAI_API_KEY);
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     });
     const openai = new OpenAIApi(configuration);
+
 
     let response;
     if (!history) {
@@ -349,8 +351,9 @@ async function getGpt4Response(prompt, history) {
         messages: [{ role: "user", content: prompt }],
       });
     } else {
+      console.log("IN ELSE LINE 325: ");
       response = await openai.createChatCompletion({
-        model: "gpt-4",
+        model: "gpt-4-32k",
         messages: prompt,
       });
     }
