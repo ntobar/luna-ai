@@ -193,34 +193,34 @@ module.exports = async (req, res) => {
 
         console.log("TOTAL TOKEN COUNT LINE 194: ", totalConversationTokenCount);
         // Perform recursive summarization
-        while (totalConversationTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
-          // Perform your summarization on formattedHistory here.
-          // Be sure to reassign the result back to formattedHistory.
-          const summarizationResult = await summarizeHistory(formattedHistory);
-          formattedHistory = summarizationResult.summarizedHistory;
+      //   while (totalConversationTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+      //     // Perform your summarization on formattedHistory here.
+      //     // Be sure to reassign the result back to formattedHistory.
+      //     const summarizationResult = await summarizeHistory(formattedHistory);
+      //     formattedHistory = summarizationResult.summarizedHistory;
 
-          // Increase the summarization count
-          summarizationCount++;
+      //     // Increase the summarization count
+      //     summarizationCount++;
 
-          // Calculate the token count after summarization
-          totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-          console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
+      //     // Calculate the token count after summarization
+      //     totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+      //     console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
 
 
-          //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
-        }
+      //     //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
+      //   }
 
-        await messageRepository.updateMessageTokens(messageId, totalConversationTokenCount);
+      //   await messageRepository.updateMessageTokens(messageId, totalConversationTokenCount);
 
-        // console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
+      //   // console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
 
-        // const openAIPrompt = {
-        //   "messages": formattedHistory
-        // }
+      //   // const openAIPrompt = {
+      //   //   "messages": formattedHistory
+      //   // }
 
-        // const gpt3Response = await getGpt4Response(incomingMessage);
-        gpt3Response = await getGpt4Response(formattedHistory, true);
-      } else {
+      //   // const gpt3Response = await getGpt4Response(incomingMessage);
+      //   gpt3Response = await getGpt4Response(formattedHistory, true);
+      // } else {
         gpt3Response = await getGpt4Response(incomingMessage, false);
       }
 
@@ -350,7 +350,7 @@ async function getGpt4Response(prompt, history) {
       });
     } else {
       response = await openai.createChatCompletion({
-        model: "gpt-4-32k",
+        model: "gpt-4",
         messages: prompt,
       });
     }
