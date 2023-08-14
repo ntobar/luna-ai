@@ -220,9 +220,9 @@ module.exports = async (req, res) => {
       //   // }
 
       //   // const gpt3Response = await getGpt4Response(incomingMessage);
-      //   gpt3Response = await getGpt4Response(formattedHistory, true);
+        gpt3Response = await getGpt4Response(formattedHistory, true);
       // } else {
-        gpt3Response = await getGpt4Response(incomingMessage, false);
+        // gpt3Response = await getGpt4Response(incomingMessage, false);
       }
 
 
