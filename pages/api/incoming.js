@@ -349,24 +349,24 @@ async function getGpt4Response(prompt, history) {
     let response;
     if (!history) {
       console.log("IN HISTORY: ******");
-      response = await openai.createChatCompletion({
-        model: "gpt-4-32k",
-        messages: [{ role: "user", content: prompt }],
-      });
       // response = await openai.createChatCompletion({
-      //   model: "gpt-3.5-turbo-16k",
+      //   model: "gpt-4-32k",
       //   messages: [{ role: "user", content: prompt }],
       // });
+      response = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo-16k",
+        messages: [{ role: "user", content: prompt }],
+      });
     } else {
       console.log("IN ELSE LINE 325: ");
-      // response = await openai.createChatCompletion({
-      //   model: "gpt-3.5-turbo-16k",
-      //   messages: prompt,
-      // });
       response = await openai.createChatCompletion({
-        model: "gpt-4-32k",
+        model: "gpt-3.5-turbo-16k",
         messages: prompt,
       });
+      // response = await openai.createChatCompletion({
+      //   model: "gpt-4-32k",
+      //   messages: prompt,
+      // });
     }
 
     console.log(`response  :****  ${response}`);
