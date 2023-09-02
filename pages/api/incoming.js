@@ -226,6 +226,7 @@ module.exports = async (req, res) => {
       }
 
 
+      console.log("RESPONSE: ", JSON.stringify(gpt3Response));
       const textResponse = gpt3Response.choices[0].message.content;
       const promptTokens = gpt3Response.usage?.prompt_tokens;
       const completionTokens = gpt3Response.usage?.completion_tokens;
