@@ -325,7 +325,7 @@ async function getGpt3Response2(prompt) {
   const openai = new OpenAIApi(configuration);
 
   const response = await openai.createCompletion({
-    model: "text-davinci-003",
+    model: "gpt-4-32k",
     prompt: prompt,
     max_tokens: 60,
     temperature: 0.5,
