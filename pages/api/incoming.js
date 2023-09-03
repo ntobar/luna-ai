@@ -138,7 +138,7 @@ module.exports = async (req, res) => {
       console.log(`[ CHAT RESET ] User has requested chat reset`);
 
       try {
-        const conversationId = conversationRepository.getConversationId(existingUser.id);
+        const conversationId = await conversationRepository.getConversationId(existingUser.id);
         await conversationRepository.deleteConversation(conversationId);
       } catch (err) {
         console.log(`[ ERROR ][ CHAT RESET ] Error Resetting Chat`);
