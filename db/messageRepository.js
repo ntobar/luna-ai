@@ -1,4 +1,5 @@
 const db = require('./db');
+import { deleteConversation } from './conversationRepository';
 
 async function storeMessageInTable(message) {
     try {
@@ -75,7 +76,7 @@ async function deleteAllMessagesAndConversation(userId) {
                 await t.none('DELETE FROM messages WHERE user_id = $1', userId);
 
                 // Delete conversation using the obtained conversationId
-                await t.none('DELETE FROM conversations WHERE id = $1', conversationId);
+                await deleteConversation(conversationId);
 
                 console.log(`[ Messages Table ] - Successfully deleted conversation and messages for user id: ${userId}`);
             } else {
@@ -93,13 +94,5 @@ module.exports = {
     getConversationHistory,
     updateMessageTokens,
     getTotalTokenCount,
-    deleteConversationAndMessages
-};
-
-
-module.exports = {
-    storeMessageInTable,
-    getConversationHistory,
-    updateMessageTokens,
-    getTotalTokenCount
+    deleteAllMessagesAndConversation
 };
