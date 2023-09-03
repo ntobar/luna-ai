@@ -133,6 +133,18 @@ module.exports = async (req, res) => {
           throw new Error(err.message);
           // res.status(500).send({ error: err.message });  // send a response
         });
+    } else if (incomingMessage.toLowerCase().includes('!reset')) {
+
+      console.log(`[ CHAT RESET ] User has requested chat reset`);
+
+      try {
+      await messageRepository.deleteConversationAndMessages(existingUser.id);
+      } catch (err) {
+        console.log(`[ ERROR ][ CHAT RESET ] Error Resetting Chat`);
+
+      }
+      res.status(204).end();
+      
     } else {
 
       const MAX_SUMMARIZATION_ITERATIONS = 5;
@@ -194,22 +206,27 @@ module.exports = async (req, res) => {
 
         console.log("TOTAL TOKEN COUNT LINE 194: ", totalConversationTokenCount);
         // Perform recursive summarization
-      //   while (totalConversationTokenCount > 32000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
-      //     // Perform your summarization on formattedHistory here.
-      //     // Be sure to reassign the result back to formattedHistory.
-      //     const summarizationResult = await summarizeHistory(formattedHistory);
-      //     formattedHistory = summarizationResult.summarizedHistory;
+        while (totalConversationTokenCount >= 8000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+          console.log(`[ Chat Completion ] - Conversation is over token limit, at ${totalConversationTokenCount} tokens. Performing Summarization`);
 
-      //     // Increase the summarization count
-      //     summarizationCount++;
+          // Perform your summarization on formattedHistory here.
+          // Be sure to reassign the result back to formattedHistory.
+          const summarizationResult = await summarizeHistory(formattedHistory);
 
-      //     // Calculate the token count after summarization
-      //     totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-      //     console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
+          formattedHistory = summarizationResult.summarizedHistory;
+
+          // Increase the summarization count
+          summarizationCount++;
+
+          // Calculate the token count after summarization
+          totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+          console.log(`[ Chat Completion ] - Summarization complete, new conversation token count is ${totalContextTokenCount}`);
+
+          console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
 
 
-      //     //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
-      //   }
+          //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
+        }
 
       //   await messageRepository.updateMessageTokens(messageId, totalConversationTokenCount);
 

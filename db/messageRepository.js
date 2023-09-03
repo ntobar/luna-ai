@@ -64,6 +64,38 @@ async function getTotalTokenCount(conversationId) {
     }
 }
 
+async function deleteAllMessagesAndConversation(userId) {
+    try {
+        await db.tx(async t => {
+            // Get conversationId based on userId from the messages table
+            const conversationId = await t.oneOrNone('SELECT conversation_id FROM messages WHERE user_id = $1 LIMIT 1', userId);
+
+            if (conversationId) {
+                // Delete messages with the specified userId
+                await t.none('DELETE FROM messages WHERE user_id = $1', userId);
+
+                // Delete conversation using the obtained conversationId
+                await t.none('DELETE FROM conversations WHERE id = $1', conversationId);
+
+                console.log(`[ Messages Table ] - Successfully deleted conversation and messages for user id: ${userId}`);
+            } else {
+                console.log(`[ Messages Table ] - No conversation found for user id: ${userId}`);
+            }
+        });
+    } catch (error) {
+        console.error('[ ERROR ][ Messages Table ] - Error deleting conversation and messages:', error);
+        throw error;
+    }
+}
+
+module.exports = {
+    storeMessageInTable,
+    getConversationHistory,
+    updateMessageTokens,
+    getTotalTokenCount,
+    deleteConversationAndMessages
+};
+
 
 module.exports = {
     storeMessageInTable,
