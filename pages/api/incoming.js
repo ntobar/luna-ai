@@ -220,8 +220,8 @@ module.exports = async (req, res) => {
           summarizationCount++;
 
           // Calculate the token count after summarization
-          totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-          console.log(`[ Chat Completion ] - Summarization complete, new conversation token count is ${totalContextTokenCount}`);
+          // totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+          // console.log(`[ Chat Completion ] - Summarization complete, new conversation token count is ${totalContextTokenCount}`);
 
           console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
 
