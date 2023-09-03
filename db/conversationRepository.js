@@ -51,6 +51,7 @@ async function updateTokenCount(conversationId, tokenCount) {
 }
 
 async function deleteConversation(conversationId) {
+    console.log(`[ Conversation Table ] - Deleting conversation with id: ${conversationId}`);
     try {
         await db.none(`
           DELETE FROM conversations

@@ -66,6 +66,8 @@ async function getTotalTokenCount(conversationId) {
 }
 
 async function deleteAllMessagesAndConversation(userId) {
+    console.log(`[ Messages Table ] - Deleting all messages and conversation for user with id: ${userId}`);
+
     try {
         await db.tx(async t => {
             // Get conversationId based on userId from the messages table
@@ -76,7 +78,7 @@ async function deleteAllMessagesAndConversation(userId) {
                 await t.none('DELETE FROM messages WHERE user_id = $1', userId);
 
                 // Delete conversation using the obtained conversationId
-                await deleteConversation(conversationId);
+                await deleteConversation(conversationId.conversation_id);
 
                 console.log(`[ Messages Table ] - Successfully deleted conversation and messages for user id: ${userId}`);
             } else {
