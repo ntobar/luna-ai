@@ -56,7 +56,7 @@ async function deleteConversation(conversationId) {
         await db.none(`
           DELETE FROM conversations
           WHERE id = $1
-        `, [conversationId]);
+        `, conversationId);
         console.log(`[ Conversation Table ] - Successfully deleted conversation: ${conversationId}`);
     } catch (error) {
         console.error(`[ ERROR ][ Conversation Table ] - Error deleting conversation: ${conversationId}:`, error);
