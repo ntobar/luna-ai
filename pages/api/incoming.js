@@ -12,7 +12,7 @@ const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
 import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer';
-const { encode, decode } = require('gpt-3-encoder'); 
+// const { encode, decode } = require('gpt-3-encoder'); 
 // const { encodeChat } = require('gpt-tokenizer');
 // import { detect } from 'langdetect';
 const langdetect = require('langdetect');
