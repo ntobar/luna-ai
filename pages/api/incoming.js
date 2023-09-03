@@ -41,6 +41,15 @@ console.log("DECODED TEXT IS: ", decodedText, " ++++++++++++++")
 // returns false if the limit is exceeded, otherwise returns the actual number of tokens (truthy value)
 const withinTokenLimit = isWithinTokenLimit(text, tokenLimit)
 console.log("IS WITHIN TOKEN LIMIIT??????: ", withinTokenLimit, " ++++++++");
+
+const chat = [
+  { role: 'system', content: 'You are a helpful assistant.' },
+  { role: 'assistant', content: 'gpt-tokenizer is awesome.' },
+]
+
+// Encode chat into tokens
+const chatTokens = encodeChat(chat)
+console.log("CHAT TOKENS: ", chatTokens, " ++++++++++++");
   if (req.method === 'POST') {
     console.log("Received webhook Request, initializing... ");
     // testConnection();
