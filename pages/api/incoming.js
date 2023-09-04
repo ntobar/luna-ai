@@ -48,7 +48,7 @@ const chat = [
 ]
 
 // Encode chat into tokens
-const chatTokens = encodeChat(chat)
+const chatTokens = encodeChat(chat, 'gpt-4');
 console.log("CHAT TOKENS: ", chatTokens, " ++++++++++++");
   if (req.method === 'POST') {
     console.log("Received webhook Request, initializing... ");
