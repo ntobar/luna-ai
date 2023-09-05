@@ -42,13 +42,13 @@ console.log("DECODED TEXT IS: ", decodedText, " ++++++++++++++")
 const withinTokenLimit = isWithinTokenLimit(text, tokenLimit)
 console.log("IS WITHIN TOKEN LIMIIT??????: ", withinTokenLimit, " ++++++++");
 
-const chat = [
-  { role: 'system', content: 'You are a helpful assistant.' },
-  { role: 'assistant', content: 'gpt-tokenizer is awesome.' },
-]
+// const chat = [
+//   { role: 'system', content: 'You are a helpful assistant.' },
+//   { role: 'assistant', content: 'gpt-tokenizer is awesome.' },
+// ]
 
-// Encode chat into tokens
-const chatTokens = encodeChat(chat, 'gpt-4');
+// // Encode chat into tokens
+// const chatTokens = encodeChat(chat, 'gpt-4');
 console.log("CHAT TOKENS: ", chatTokens, " ++++++++++++");
   if (req.method === 'POST') {
     console.log("Received webhook Request, initializing... ");
