@@ -26,6 +26,7 @@
     "framer-motion": "^7.6.7",
     "gpt-3-encoder": "^1.1.4",
     "gpt-tokenizer": "^2.1.1",
+    "gpt-tokens": "^1.1.2",
     "langdetect": "^0.2.1",
     "next": "^13.4.4",
     "openai": "^3.2.1",

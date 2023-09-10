@@ -11,7 +11,9 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
-import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer';
+import { GPTTokens } from 'gpt-tokens';
+// import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer/esm/model/gpt-4';
+// const { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } = require('gpt-tokenizer/esm/model/gpt-4');
 // const { encode, decode } = require('gpt-3-encoder'); 
 // const { encodeChat } = require('gpt-tokenizer');
 // import { detect } from 'langdetect';
@@ -24,32 +26,10 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+
 // START MAIN FUNCTION
 module.exports = async (req, res) => {
-const text = 'Hello, world!'
-const tokenLimit = 10
 
-// Encode text into tokens
-const tokens = encode(text)
-console.log("TESTING TOKENIZER, TOKENS: ", tokens, " +++++++++")
-
-// Decode tokens back into text
-const decodedText = decode(tokens)
-console.log("DECODED TEXT IS: ", decodedText, " ++++++++++++++")
-
-// Check if text is within the token limit
-// returns false if the limit is exceeded, otherwise returns the actual number of tokens (truthy value)
-const withinTokenLimit = isWithinTokenLimit(text, tokenLimit)
-console.log("IS WITHIN TOKEN LIMIIT??????: ", withinTokenLimit, " ++++++++");
-
-// const chat = [
-//   { role: 'system', content: 'You are a helpful assistant.' },
-//   { role: 'assistant', content: 'gpt-tokenizer is awesome.' },
-// ]
-
-// // Encode chat into tokens
-// const chatTokens = encodeChat(chat, 'gpt-4');
-// console.log("CHAT TOKENS: ", chatTokens, " ++++++++++++");
   if (req.method === 'POST') {
     console.log("Received webhook Request, initializing... ");
     // testConnection();
@@ -221,6 +201,21 @@ console.log("IS WITHIN TOKEN LIMIIT??????: ", withinTokenLimit, " ++++++++");
         let conversationHistory = await messageRepository.getConversationHistory(conversationId);
         let formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
+        const usageInfo = new GPTTokens({
+          model   : 'gpt-4',
+          messages: formattedHistory
+      });
+      
+      console.table({
+        'Tokens prompt'    : usageInfo.promptUsedTokens,
+        'Tokens completion': usageInfo.completionUsedTokens,
+        'Tokens total'     : usageInfo.usedTokens,
+      })
+
+        // const usageInfo = new GPTTokens({
+        //   model: 'gpt-4',
+        //   messages: formattedHistory
+        // })
         let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
 
         // const tokenizer = new Tokenizer({ modelName: 'gpt-4-32k' });
