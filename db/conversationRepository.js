@@ -36,11 +36,25 @@ async function createNewConversation(userId) {
     }
 }
 
+// async function updateTokenCount(conversationId, tokenCount) {
+//     try {
+//         await db.none(`
+//           UPDATE conversations
+//           SET token_count = token_count + $1
+//           WHERE id = $2
+//         `, [tokenCount, conversationId]);
+//         console.log(`[ Conversation Table ] - Successfully updated token count for conversation: ${conversationId}`);
+//     } catch (error) {
+//         console.error(`[ ERROR ][ Conversation Table ] - Error updating token count for conversation: ${conversationId}:`, error);
+//         throw error;
+//     }
+// }
+
 async function updateTokenCount(conversationId, tokenCount) {
     try {
         await db.none(`
           UPDATE conversations
-          SET token_count = token_count + $1
+          SET token_count = $1
           WHERE id = $2
         `, [tokenCount, conversationId]);
         console.log(`[ Conversation Table ] - Successfully updated token count for conversation: ${conversationId}`);
@@ -49,6 +63,7 @@ async function updateTokenCount(conversationId, tokenCount) {
         throw error;
     }
 }
+
 
 async function deleteConversation(conversationId) {
     console.log(`[ Conversation Table ] - Deleting conversation with id: ${conversationId}`);
