@@ -192,8 +192,8 @@ module.exports = async (req, res) => {
                 let conversationHistory = await messageRepository.getConversationHistory(conversationId);
                 formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
-                console.log(`FORMATTED HISTORY: \n ${formattedHistory}`);
-                console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
+                // console.log(`FORMATTED HISTORY: \n ${formattedHistory}`);
+                // console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
 
                 /**
                  * Get PROMPT tokens (prompt + history)
@@ -230,6 +230,7 @@ module.exports = async (req, res) => {
                     console.log(`[ Chat Completion ] - Conversation is over token limit, at ${usageInfo.usedTokens} tokens. Performing Summarization`);
 
                     formattedHistory.pop();
+                    console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
                     // Perform your summarization on formattedHistory here.
                     // Be sure to reassign the result back to formattedHistory.
                     formattedHistory = await summarizeHistory(formattedHistory);
