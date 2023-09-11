@@ -192,6 +192,9 @@ module.exports = async (req, res) => {
                 let conversationHistory = await messageRepository.getConversationHistory(conversationId);
                 formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
+                console.log(`FORMATTED HISTORY: \n ${formattedHistory}`);
+                console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
+
                 /**
                  * Get PROMPT tokens (prompt + history)
                  * Used to calculate if the context tokens has not exceeded the limit
