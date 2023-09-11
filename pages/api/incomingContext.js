@@ -352,10 +352,12 @@ async function summarizeHistory(formattedHistory) {
     // ${historyText}`;
 
     const prompt = `
-Summarize the following conversation in the format: 
-"[{ role: 'user/assistant', content: 'message content' }, ...]"
+I have a conveersation with important details that I need to be summarized concisely while preserving the key points. Please summarize the following conversation and return it in the exact structured format as shown below:
+[{ "role": "user/assistant", "content": "message content" }, ...]
+Do not return as plain text. Use the format specified above.
 Here's the conversation:
 ${historyText}`;
+
 
 
 
