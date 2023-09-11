@@ -165,6 +165,7 @@ module.exports = async (req, res) => {
             let messageId;
             let conversationId;
             let usageInfo;
+            let formattedHistory;
 
             // If we want context, message doesnt have !notag
             if (!incomingMessage.toLowerCase().includes('!notag')) {
@@ -189,7 +190,7 @@ module.exports = async (req, res) => {
 
                 // Fetch conversation history and format it
                 let conversationHistory = await messageRepository.getConversationHistory(conversationId);
-                let formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
+                formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
 
                 /**
                  * Get PROMPT tokens (prompt + history)
