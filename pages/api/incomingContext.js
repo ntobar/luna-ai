@@ -235,6 +235,9 @@ module.exports = async (req, res) => {
 
                     // Re-append the new user message to the summarized history.
                     formattedHistory.push({ role: 'user', content: incomingMessage });
+                    console.log(`[ Summarization Loop ] - in summarizationCount: ${summarizationCount}`);
+                    console.table(formattedHistory, ["role", "content"]);
+
                     // formattedHistory = summarizationResult.summarizedHistory;
 
                     // Recalculate token count after summarization
