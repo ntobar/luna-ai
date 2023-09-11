@@ -91,10 +91,22 @@ async function deleteAllMessagesAndConversation(userId) {
     }
 }
 
+async function deleteAllMessagesForUser(userId) {
+    try {
+        const query = 'DELETE FROM messages WHERE user_id = $1';
+        await db.none(query, [userId]);
+        console.log('[ Messages Table ] - Successfully deleted all messages for user', userId);
+    } catch (error) {
+        console.error('[ ERROR ][ Messages Table ] - Error deleting all messages for user', userId, ':', error.message || error);
+    }
+}
+
+
 module.exports = {
     storeMessageInTable,
     getConversationHistory,
     updateMessageTokens,
     getTotalTokenCount,
-    deleteAllMessagesAndConversation
+    deleteAllMessagesAndConversation,
+    deleteAllMessagesForUser
 };

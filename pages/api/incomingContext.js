@@ -155,20 +155,6 @@ module.exports = async (req, res) => {
       const MAX_SUMMARIZATION_ITERATIONS = 5;
       let summarizationCount = 0;
 
-      // const language = langdetect.detectOne(incomingMessage);
-      // let welcomeText;
-
-      // if (language) {
-      //   if (language === 'en') {
-      //     welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
-      //   } else if (language === 'es') {
-      //     welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName);
-      //   }
-      // } else {
-      //   welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
-      // }
-      //End delete
-      // Generate a response using OpenAI's GPT-4
       console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
 
 
@@ -220,7 +206,7 @@ module.exports = async (req, res) => {
         //   model: 'gpt-4',
         //   messages: formattedHistory
         // })
-        let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+        // let totalConversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
 
         // const tokenizer = new Tokenizer({ modelName: 'gpt-4-32k' });
 
@@ -229,9 +215,9 @@ module.exports = async (req, res) => {
         // let totalContextTokenCount = encode()
 
         console.log("TOTAL TOKEN COUNT LINE 194: ", totalConversationTokenCount);
-        // Perform recursive summarization
+        // Perform recursive summarization. MAX_TOKENS - 132 (132 is the summarization prompt token count)
         // while (totalConversationTokenCount >= 8000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
-        while (usageInfo.usedTokens >= 8000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+        while (usageInfo.usedTokens >= 7868 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
 
           console.log(`[ Chat Completion ] - Conversation is over token limit, at ${totalConversationTokenCount} tokens. Performing Summarization`);
 
@@ -259,32 +245,14 @@ module.exports = async (req, res) => {
             'Tokens total': usageInfo.usedTokens,
           })
 
-          // formattedHistory = summarizationResult
-
-
-
-          // Calculate the token count after summarization
-          // totalContextTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-          // console.log(`[ Chat Completion ] - Summarization complete, new conversation token count is ${totalContextTokenCount}`);
 
           console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
 
+          await replaceWithSummarizedConversation(existingUser.id, conversationId, formattedHistory)
 
           //  TODO: REPLACE ENTIRE CONVERSATION WITH NEW SUMMARY
         }
-
-        //   await messageRepository.updateMessageTokens(messageId, totalConversationTokenCount);
-
-        //   // console.log(`FORMATTED HISTORY: ${JSON.stringify(formattedHistory)}`);
-
-        //   // const openAIPrompt = {
-        //   //   "messages": formattedHistory
-        //   // }
-
-        //   // const gpt3Response = await getGpt4Response(incomingMessage);
         gpt3Response = await getGpt4Response(formattedHistory, true);
-        // } else {
-        // gpt3Response = await getGpt4Response(incomingMessage, false);
       }
 
 
@@ -295,7 +263,7 @@ module.exports = async (req, res) => {
       const totalTokens = gpt3Response.usage?.total_tokens;
 
       console.table({
-        'Request-Info': 'Request-Info',
+        'Token-Lib': 'Request-Info',
         promptTokens: usageInfo.promptUsedTokens,
         completionTokens: usageInfo.completionUsedTokens,
         totalTokens: usageInfo.usedTokens,
@@ -304,9 +272,9 @@ module.exports = async (req, res) => {
 
       // We want to save messages if it doesnt include !notag
       if (!incomingMessage.toLowerCase().includes('!notag')) {
-        if (messageId) {
-          await messageRepository.updateMessageTokens(messageId, promptTokens);
-        }
+        // if (messageId) {
+        //   await messageRepository.updateMessageTokens(messageId, usageInfo.promptTokens);
+        // }
         // Store messages in db
         const aiMessage = {
           userId: existingUser.id,
@@ -320,8 +288,8 @@ module.exports = async (req, res) => {
 
 
         // After each interaction:
-        const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-        await conversationRepository.updateTokenCount(conversationId, conversationTokenCount);
+        // const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+        await conversationRepository.updateTokenCount(conversationId, usageInfo.usedTokens);
       }
       // res.setHeader('Content-Type', 'text/xml');
       // if (gpt3Response.length < 1500) {
@@ -353,7 +321,9 @@ async function summarizeHistory(formattedHistory) {
   const prompt = `
 I have a conversation with important details that I need to be summarized concisely while preserving the key points and relevant information, specifically, 
 I want you to please summarize this conversation and return the summarization in the exact format im providing the conversation in. The format should be in 
-the GPT-4 api format of roles and content. I want to be able to pass in this summarization
+the GPT-4 api format of roles and content:
+[{ role: 'user/assistant', content: 'message content' }, ...]
+I want to be able to pass in this summarization
 exactly as you return it, in the messages key of the api request to openai's GPT api. Here is the conversation:
 ${historyText}`;
 
@@ -377,6 +347,25 @@ ${historyText}`;
   // return { summarizedHistory: [formattedSummary], tokenCount: gptResponse.usage?.prompt_tokens };
   return summary;
 }
+
+async function replaceWithSummarizedConversation(userId, conversationId, summarizedConversation) {
+    // Step 1: Delete the entire existing conversation
+    await messageRepository.deleteAllMessagesForUser(userId);
+
+
+    // Step 2: Insert the newly summarized conversation
+    for (const message of summarizedConversation) {
+        const messageToInsert = {
+            userId: userId,  // Assuming you have access to the existingUser from a higher scope
+            conversationId: conversationId,
+            role: message.role,
+            content: message.content,
+            // Note: If you're keeping track of tokens per message, you'd calculate and add them here.
+        };
+        await messageRepository.storeMessageInTable(messageToInsert);
+    }
+}
+
 
 async function testConnection() {
   try {
