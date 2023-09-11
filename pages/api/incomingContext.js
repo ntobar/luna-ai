@@ -228,7 +228,7 @@ module.exports = async (req, res) => {
                     formattedHistory.pop();
                     // Perform your summarization on formattedHistory here.
                     // Be sure to reassign the result back to formattedHistory.
-                    const formattedHistory = await summarizeHistory(formattedHistory);
+                    formattedHistory = await summarizeHistory(formattedHistory);
                     // Increase the summarization count
                     summarizationCount++;
 
@@ -264,12 +264,7 @@ module.exports = async (req, res) => {
             const completionTokens = gpt3Response.usage?.completion_tokens;
             const totalTokens = gpt3Response.usage?.total_tokens;
 
-            console.table({
-                'Token-Lib': 'Request-Info',
-                promptTokens: usageInfo.promptUsedTokens,
-                completionTokens: usageInfo.completionUsedTokens,
-                totalTokens: usageInfo.usedTokens,
-            })
+            
             console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
             // We want to save messages if it doesnt include !notag
@@ -285,6 +280,22 @@ module.exports = async (req, res) => {
                     content: textResponse,
                     tokens: completionTokens
                 }
+
+                formattedHistory.push({ role: 'assistant', content: textResponse });
+
+
+                usageInfo = new GPTTokens({
+                    model: 'gpt-4',
+                    messages: formattedHistory
+                });
+
+                console.table({
+                    'After Getting GPT response': true,
+                    'Tokens prompt': usageInfo.promptUsedTokens,
+                    'Tokens completion': usageInfo.completionUsedTokens,
+                    'Tokens total': usageInfo.usedTokens,
+                })
+
 
                 await messageRepository.storeMessageInTable(aiMessage);
 
