@@ -331,7 +331,8 @@ async function summarizeHistory(formattedHistory) {
     // Combine all the conversation history into one text
     const historyText = formattedHistory.reduce((acc, message) => {
         return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
-    }, '');
+    }, '').trim();  // Ensure no leading or trailing whitespace
+    
 
     // ${formattedHistory.map(message => `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}`).join('\n')}
 
