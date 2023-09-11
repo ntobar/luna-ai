@@ -161,6 +161,7 @@ module.exports = async (req, res) => {
       let gpt3Response;
       let messageId;
       let conversationId;
+      let usageInfo;
 
       // If we want context, message doesnt have !notag
       if (!incomingMessage.toLowerCase().includes('!notag')) {
@@ -191,7 +192,7 @@ module.exports = async (req, res) => {
          * Get PROMPT tokens (prompt + history)
          * Used to calculate if the context tokens has not exceeded the limit
          */
-        let usageInfo = new GPTTokens({
+        usageInfo = new GPTTokens({
           model: 'gpt-4',
           messages: formattedHistory
         });
