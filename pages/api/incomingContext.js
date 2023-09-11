@@ -349,7 +349,7 @@ ${historyText}`;
     // const prompt = `Please summarize the following conversation:\n${historyText}`;
 
     // Call the OpenAI API with the prompt
-    const gptResponse = await getGpt4Response(prompt, false);
+    const gptResponse = await getGpt4Response(prompt, true);
 
     // Extract the summary from the GPT response
     const summary = gptResponse.choices[0].message.content;
