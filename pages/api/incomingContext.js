@@ -416,6 +416,7 @@ async function getGpt3Response2(prompt) {
 }
 
 async function getGpt4Response(prompt, history) {
+    console.log("PROMPT **, ", JSON.stringify(prompt));
     try {
         console.log(`[ Chat Completion ] - Sending request to openai api with prompt: ${prompt}`);
         console.log("OPENAI KEY: ", process.env.OPENAI_API_KEY);
