@@ -442,8 +442,7 @@ async function getGpt4Response(prompt, history) {
             //   messages: [{ role: "user", content: prompt }],
             // });
             response = await openai.createChatCompletion({
-                // model: "gpt-3.5-turbo-16k",
-                model: "gpt-4-32k",
+                model: "gpt-3.5-turbo-16k",
                 messages: [{ role: "user", content: prompt }],
             });
         } else {
