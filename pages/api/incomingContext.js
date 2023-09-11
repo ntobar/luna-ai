@@ -214,12 +214,12 @@ module.exports = async (req, res) => {
         // let totalContextTokenCount = encodeChat(formattedHistory, tokenizer);
         // let totalContextTokenCount = encode()
 
-        console.log("TOTAL TOKEN COUNT LINE 194: ", totalConversationTokenCount);
+        console.log("TOTAL TOKEN COUNT LINE 194: ", usageInfo.usedTokens);
         // Perform recursive summarization. MAX_TOKENS - 132 (132 is the summarization prompt token count)
         // while (totalConversationTokenCount >= 8000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
         while (usageInfo.usedTokens >= 7868 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
 
-          console.log(`[ Chat Completion ] - Conversation is over token limit, at ${totalConversationTokenCount} tokens. Performing Summarization`);
+          console.log(`[ Chat Completion ] - Conversation is over token limit, at ${usageInfo.usedTokens} tokens. Performing Summarization`);
 
           formattedHistory.pop();
           // Perform your summarization on formattedHistory here.
@@ -245,8 +245,6 @@ module.exports = async (req, res) => {
             'Tokens total': usageInfo.usedTokens,
           })
 
-
-          console.log("TOTAL TOKEN COUNT LINE 201: ", totalConversationTokenCount);
 
           await replaceWithSummarizedConversation(existingUser.id, conversationId, formattedHistory)
 
