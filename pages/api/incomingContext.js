@@ -351,12 +351,20 @@ async function summarizeHistory(formattedHistory) {
     // exactly as you return it, in the messages key of the api request to openai's GPT api. Here is the conversation:
     // ${historyText}`;
 
-    const prompt = `
-I have a conveersation with important details that I need to be summarized concisely while preserving the key points. Please summarize the following conversation and return it in the exact structured format as shown below:
-[{ "role": "user/assistant", "content": "message content" }, ...]
-Do not return as plain text. Use the format specified above.
+//     const prompt = `
+// I have a conveersation with important details that I need to be summarized concisely while preserving the key points. Please summarize the following conversation and return it in the exact structured format as shown below:
+// [{ "role": "user/assistant", "content": "message content" }, ...]
+// Do not return as plain text. Use the format specified above.
+// Here's the conversation:
+// ${historyText}`;
+
+const prompt = `
+Summarize the following conversation and return the summarization in the exact format:
+[{ role: 'user/assistant', content: 'message content' }, ...]
+Do not include any extraneous information or formatting outside of this structure.
 Here's the conversation:
 ${historyText}`;
+
 
 
 
