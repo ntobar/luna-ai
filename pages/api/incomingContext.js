@@ -230,12 +230,14 @@ module.exports = async (req, res) => {
                     console.log(`[ Chat Completion ] - Conversation is over token limit, at ${usageInfo.usedTokens} tokens. Performing Summarization`);
 
                     formattedHistory.pop();
-                    console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
                     // Perform your summarization on formattedHistory here.
                     // Be sure to reassign the result back to formattedHistory.
                     formattedHistory = await summarizeHistory(formattedHistory);
                     // Increase the summarization count
                     summarizationCount++;
+
+                    console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
+                    console.log(`IS ARRAY? ${Array.isArray(formattedHistory)}`);
 
                     // Re-append the new user message to the summarized history.
                     formattedHistory.push({ role: 'user', content: incomingMessage });
