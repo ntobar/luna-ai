@@ -268,7 +268,7 @@ module.exports = async (req, res) => {
             const completionTokens = gpt3Response.usage?.completion_tokens;
             const totalTokens = gpt3Response.usage?.total_tokens;
 
-            
+
             console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
             // We want to save messages if it doesnt include !notag
@@ -332,25 +332,32 @@ async function summarizeHistory(formattedHistory) {
     const historyText = formattedHistory.reduce((acc, message) => {
         return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
     }, '').trim();  // Ensure no leading or trailing whitespace
-    
+
 
     // ${formattedHistory.map(message => `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}`).join('\n')}
 
+    //     const prompt = `
+    // I have a conversation with important details that I need to be summarized concisely while preserving the key points and relevant information, specifically, 
+    // I want you to please summarize this conversation and return the summarization in the exact format im providing the conversation in. The format should be in 
+    // the GPT-4 api format of roles and content:
+    // [{ role: 'user/assistant', content: 'message content' }, ...]
+    // I want to be able to pass in this summarization
+    // exactly as you return it, in the messages key of the api request to openai's GPT api. Here is the conversation:
+    // ${historyText}`;
+
     const prompt = `
-I have a conversation with important details that I need to be summarized concisely while preserving the key points and relevant information, specifically, 
-I want you to please summarize this conversation and return the summarization in the exact format im providing the conversation in. The format should be in 
-the GPT-4 api format of roles and content:
-[{ role: 'user/assistant', content: 'message content' }, ...]
-I want to be able to pass in this summarization
-exactly as you return it, in the messages key of the api request to openai's GPT api. Here is the conversation:
+Summarize the following conversation in the format: 
+"[{ role: 'user/assistant', content: 'message content' }, ...]"
+Here's the conversation:
 ${historyText}`;
+
 
 
     // Create the OpenAI prompt
     // const prompt = `Please summarize the following conversation:\n${historyText}`;
 
     // Call the OpenAI API with the prompt
-    const gptResponse = await getGpt4Response(prompt, true);
+    const gptResponse = await getGpt4Response(prompt, false);
 
     // Extract the summary from the GPT response
     const summary = gptResponse.choices[0].message.content;
@@ -436,7 +443,7 @@ async function getGpt4Response(prompt, history) {
             // });
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-4",
+                model: "gpt-4-32k",
                 messages: [{ role: "user", content: prompt }],
             });
         } else {
