@@ -365,6 +365,7 @@ Do not include any extraneous information or formatting outside of this structur
 Here's the conversation:
 ${historyText}`;
 
+console.log(`PROMPT: ${prompt}`);
 
 
 
