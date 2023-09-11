@@ -368,6 +368,16 @@ ${historyText}`;
     // Extract the summary from the GPT response
     const summary = gptResponse.choices[0].message.content;
 
+    try {
+        // Try to parse the summary string to an array
+        const summaryArray = JSON.parse(summary);
+        return summaryArray;
+    } catch (error) {
+        console.error("Error parsing summary to array format:", error);
+        // Return a default formatted summary if there's an error
+        // return [{ role: 'assistant', content: "Unable to summarize the conversation at this moment." }];
+    }
+
     // Convert the summary into the correct format
     // const formattedSummary = {
     //   role: 'assistant',
@@ -376,7 +386,7 @@ ${historyText}`;
 
     // Return the formatted summary
     // return { summarizedHistory: [formattedSummary], tokenCount: gptResponse.usage?.prompt_tokens };
-    return summary;
+    //return summary;
 }
 
 async function replaceWithSummarizedConversation(userId, conversationId, summarizedConversation) {
