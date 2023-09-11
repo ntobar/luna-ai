@@ -165,7 +165,7 @@ module.exports = async (req, res) => {
             let messageId;
             let conversationId;
             let usageInfo;
-            let formattedHistory;
+            let formattedHistory = [];
 
             // If we want context, message doesnt have !notag
             if (!incomingMessage.toLowerCase().includes('!notag')) {
