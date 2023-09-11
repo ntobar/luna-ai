@@ -502,9 +502,6 @@ async function sendTwilioMessage(gpt4Response, toNumber) {
 
 async function sendResponse(gpt4Response, toNumber) {
   try {
-
-
-
     if (gpt4Response.length < 1500) {
       console.log(`[ Chat Completion ][ Twilio Callback ]: Preparing to send response to Twilio Client`);
 
@@ -513,35 +510,15 @@ async function sendResponse(gpt4Response, toNumber) {
       const chunks = splitMessage(gpt4Response, 1500);
 
       console.log(`[ Chat Completion ][ Twilio Callback ]: Split text, preparing to send ${chunks.length} messages to Twilio Client`);
-      // const accountSid = process.env.TWILIO_ACCOUNT_SID;
-      // const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-      for (let i = 0; i < chunks.length; i++) {
-        console.log(`Chunk ${chunks[i]}: ${chunks[i]}`);
-        await sendTwilioMessage(chunks[i], toNumber);
-        // const params = new URLSearchParams({
-        //   From: 'whatsapp:+593994309557',
-        //   To: toNumber,
-        //   Body: chunks[i],
-        // }).toString();
-        // const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/x-www-form-urlencoded',
-        //     'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
-        //   },
-        //   body: params
-        // });
-
-        // if (!response.ok) {
-        //   const errorMessage = await response.text();
-        //   console.log('Failed to send SMS: ', errorMessage);
-        //   throw new Error('Failed to send SMS: ' + errorMessage);
-        // } else {
-        //   const json = await response.json();
-        //   console.log(`[ Chat Completion ][ Twilio Callback ]: Successfully sent messages to Twilio client, Twilio response: ${json}`);
-        // }
+      for (const chunk of chunks) {
+        console.log(`Chunk: ${chunk}`);
+        await sendTwilioMessage(chunk, toNumber);
       }
+    //   for (let i = 0; i < chunks.length; i++) {
+    //     console.log(`Chunk ${chunks[i]}: ${chunks[i]}`);
+    //     await sendTwilioMessage(chunks[i], toNumber);
+    //   }
     }
   } catch (err) {
     console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Failed to send messages to Twilio client, error: ${err}`);
