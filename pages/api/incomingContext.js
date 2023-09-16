@@ -51,7 +51,6 @@ module.exports = async (req, res) => {
             await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna!`, 'whatsapp:+18572009432');
             res.status(204).end();
         } else {
-            await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna!`, 'whatsapp:+18572009432');
             // User doesn't exist, create new user
             const userId = await userRepository.createUser(whatsappNumber, profileName);
             existingUser = { id: userId };
@@ -68,6 +67,7 @@ module.exports = async (req, res) => {
             } else {
                 welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
             }
+            await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
             res.setHeader('Content-Type', 'text/xml');
             res.send(`<Response><Message>${welcomeText}</Message></Response>`);
         }
