@@ -334,10 +334,12 @@ module.exports = async (req, res) => {
 };
 
 async function summarizeHistory(formattedHistory) {
+    // REMOVE? What is this doing, is it making it be one text without the {}? 
+    // I need it in JSON format, i think i need to remove.
     // Combine all the conversation history into one text
-    const historyText = formattedHistory.reduce((acc, message) => {
-        return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
-    }, '').trim();  // Ensure no leading or trailing whitespace
+    // const historyText = formattedHistory.reduce((acc, message) => {
+    //     return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
+    // }, '').trim();  // Ensure no leading or trailing whitespace
 
 
     // ${formattedHistory.map(message => `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}`).join('\n')}
@@ -363,7 +365,7 @@ Summarize the following conversation and return the summarization in the exact f
 [{ role: 'user/assistant', content: 'message content' }, ...]
 Do not include any extraneous information or formatting outside of this structure.
 Here's the conversation:
-${historyText}`;
+${formattedHistory}`;
 
 console.log(`PROMPT: ${prompt}`);
 
