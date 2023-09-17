@@ -341,9 +341,9 @@ async function summarizeHistory(formattedHistory) {
     //     return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
     // }, '').trim();  // Ensure no leading or trailing whitespace
 
-    const historyText = formattedHistory.reduce((acc, message) => {
-        return acc + `${message.role}: ${message.content}\n`;
-    }, '');
+    // const historyText = formattedHistory.reduce((acc, message) => {
+    //     return acc + `${message.role}: ${message.content}\n`;
+    // }, '');
 
     // ${formattedHistory.map(message => `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}`).join('\n')}
 
@@ -363,12 +363,24 @@ async function summarizeHistory(formattedHistory) {
 // Here's the conversation:
 // ${historyText}`;
 
+// const prompt = `
+// Summarize the following conversation and return the summarization in the exact format:
+// [{ role: 'user/assistant', content: 'message content' }, ...]
+// Do not include any extraneous information or formatting outside of this structure.
+// Here's the conversation:
+// ${historyText}`;
+
+const historyText = formattedHistory.map(message => `${message.role}: ${message.content}`).join('\n');
+
 const prompt = `
-Summarize the following conversation and return the summarization in the exact format:
+Given the conversation below, return a summarized version in the exact format:
 [{ role: 'user/assistant', content: 'message content' }, ...]
-Do not include any extraneous information or formatting outside of this structure.
 Here's the conversation:
-${historyText}`;
+${historyText}
+End of conversation.
+Return summarized version below:
+`;
+
 
 console.log(`PROMPT: ${prompt}`);
 
