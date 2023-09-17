@@ -341,6 +341,9 @@ async function summarizeHistory(formattedHistory) {
     //     return acc + `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}\n`;
     // }, '').trim();  // Ensure no leading or trailing whitespace
 
+    const historyText = formattedHistory.reduce((acc, message) => {
+        return acc + `${message.role}: ${message.content}\n`;
+    }, '');
 
     // ${formattedHistory.map(message => `${message.role === 'user' ? 'User:' : 'Assistant:'} ${message.content}`).join('\n')}
 
@@ -365,7 +368,7 @@ Summarize the following conversation and return the summarization in the exact f
 [{ role: 'user/assistant', content: 'message content' }, ...]
 Do not include any extraneous information or formatting outside of this structure.
 Here's the conversation:
-${formattedHistory}`;
+${historyText}`;
 
 console.log(`PROMPT: ${prompt}`);
 
