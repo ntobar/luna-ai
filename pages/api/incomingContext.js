@@ -225,7 +225,9 @@ module.exports = async (req, res) => {
                 console.log("TOTAL TOKEN COUNT LINE 194: ", usageInfo.usedTokens);
                 // Perform recursive summarization. MAX_TOKENS - 132 (132 is the summarization prompt token count)
                 // while (totalConversationTokenCount >= 8000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
-                while (usageInfo.usedTokens >= 7868 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+                // while (usageInfo.usedTokens >= 7868 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+                    while (usageInfo.usedTokens >= 5000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+
 
                     console.log(`[ Chat Completion ] - Conversation is over token limit, at ${usageInfo.usedTokens} tokens. Performing Summarization`);
 
@@ -429,6 +431,7 @@ async function replaceWithSummarizedConversation(userId, conversationId, summari
             conversationId: conversationId,
             role: message.role,
             content: message.content,
+            tokens: 0
             // Note: If you're keeping track of tokens per message, you'd calculate and add them here.
         };
         await messageRepository.storeMessageInTable(messageToInsert);
@@ -497,6 +500,7 @@ async function getGpt4Response(prompt, history) {
                 model: "gpt-4",
                 messages: prompt,
             });
+            //  ANOther idea is to summarize prompt before it reaches 8k
             // response = await openai.createChatCompletion({
             //   model: "gpt-4-32k",
             //   messages: prompt,
