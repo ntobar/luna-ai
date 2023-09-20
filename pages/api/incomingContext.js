@@ -54,7 +54,10 @@ module.exports = async (req, res) => {
             // User doesn't exist, create new user
             const userId = await userRepository.createUser(whatsappNumber, profileName);
             existingUser = { id: userId };
-            const language = langdetect.detectOne(incomingMessage);
+            let language;
+            if(!incomingMediaUrl) {
+            language = langdetect.detectOne(incomingMessage);
+            }
             let welcomeText;
 
             if (language) {

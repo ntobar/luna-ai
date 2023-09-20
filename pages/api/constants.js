@@ -30,9 +30,9 @@ Hang tight, and enjoy this wild ride through the Luna universe!`,
     `Hello {profile}, you've officially entered the Luna-verse...`,
 ];
 export const spanishWelcomeMessage = [
-    `¡Hola {profile}! Bienvenido oficialmente al Lunaverso, donde los chatbots tienen más trucos bajo la manga que un mago en un espectáculo de talentos. Ya sea que necesites respuestas rápidas, imágenes generadas, transcripciones de audio, o revivir nuestras conversaciones pasadas, Luna está aquí para ti.
+    `¡Hola {profile}! Bienvenido oficialmente al mundo de Luna, donde tengo más trucos bajo la manga que David Blaine. Ya sea que necesites respuestas rápidas, imágenes generadas, transcripciones de audio, o revivir nuestras conversaciones pasadas, Luna está aquí para ti.
 
-Es como tener un superhéroe en tu bolsillo - siempre listo para la acción, y puede que incluso tenga una capa invisible. Pero no te preocupes, no hay bromas de superhéroes aquí, solo soluciones inteligentes y astutas. ¡Prepárate para la aventura y bienvenido al mundo de Luna!`,
+Es como tener un superhéroe en tu bolsillo - siempre listo para la acción. ¡Prepárate para la aventura!`,
 
     `¡Hola {profile}! Te doy la bienvenida oficial al Lunaverso, donde los chatbots son tan astutos que te harán cuestionar tus propias habilidades. ¿Necesitas respuestas, imágenes generadas, audios transcritos, o revivir nuestras antiguas conversaciones? ¡Luna lo tiene todo!
 
