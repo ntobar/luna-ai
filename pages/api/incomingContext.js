@@ -48,7 +48,11 @@ module.exports = async (req, res) => {
         if (existingUser) {
             // User already exists, update last_seen
             await userRepository.updateLastSeen(existingUser.id);
-            await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna!`, 'whatsapp:+18572009432');
+            if(incomingMessage) {
+            await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna! Prompt: \n ${incomingMessage}`, 'whatsapp:+18572009432');
+            } else {
+                await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna!`, 'whatsapp:+18572009432');
+            }
             res.status(204).end();
         } else {
             // User doesn't exist, create new user
@@ -70,7 +74,12 @@ module.exports = async (req, res) => {
             } else {
                 welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
             }
+            if(incomingMessage) {
             await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
+            } else {
+                await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
+
+            }
             res.setHeader('Content-Type', 'text/xml');
             res.send(`<Response><Message>${welcomeText}</Message></Response>`);
         }
