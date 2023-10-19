@@ -238,7 +238,7 @@ module.exports = async (req, res) => {
                 // Perform recursive summarization. MAX_TOKENS - 132 (132 is the summarization prompt token count)
                 // while (totalConversationTokenCount >= 8000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
                 // while (usageInfo.usedTokens >= 7868 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
-                    while (usageInfo.usedTokens >= 5000 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
+                    while (usageInfo.usedTokens >= 7868 && summarizationCount < MAX_SUMMARIZATION_ITERATIONS) {
 
 
                     console.log(`[ Chat Completion ] - Conversation is over token limit, at ${usageInfo.usedTokens} tokens. Performing Summarization`);
