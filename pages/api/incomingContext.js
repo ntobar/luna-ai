@@ -81,6 +81,7 @@ module.exports = async (req, res) => {
             res.setHeader('Content-Type', 'text/xml');
             res.send(`<Response><Message>${welcomeText}</Message></Response>`);
         }
+    }
 
         // Commands:
         // !image
