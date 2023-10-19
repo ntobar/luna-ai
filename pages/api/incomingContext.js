@@ -62,18 +62,16 @@ module.exports = async (req, res) => {
             if(!incomingMediaUrl) {
             language = langdetect.detectOne(incomingMessage);
             }
-            let welcomeText;
+            let welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName ? profileName : '');
 
-            if (language) {
+            if (language && language != undefined) {
                 console.log(`[ Incoming Request ] - Request received in language: ${language}`);
                 if (language === 'en') {
-                    welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
+                    welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName ? profileName : '');
                 } else if (language === 'es') {
-                    welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName);
+                    welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName ? profileName : '');
                 }
-            } else {
-                welcomeText = englishWelcomeMessage[0].replace('{profile}', profileName);
-            }
+
             if(incomingMessage) {
             await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
             } else {
