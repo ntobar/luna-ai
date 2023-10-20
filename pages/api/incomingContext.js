@@ -507,7 +507,8 @@ async function getGpt4Response(prompt, history) {
         } else {
             console.log("IN ELSE LINE 325: ");
             response = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo-16k",
+                // model: "gpt-3.5-turbo-16k",
+                model: "gpt-3.5-turbo",
                 // model: "gpt-4",
                 messages: prompt,
             });
