@@ -543,6 +543,7 @@ async function getGpt4Response(prompt, history) {
 
         console.error(`[ ERROR ][ Chat Completion ] - Failed to get GPT-4 response, error: ${err}`);
         console.error(`[ ERROR ][ Chat Completion ] - Error message: ${err.message}`);
+        return     `🚫 Oops! It seems there's a hiccup with the OpenAI GPT service right now. Luna is all good, but we rely on that service to handle some tasks. Please give it a moment and try again later. We apologize for any inconvenience and appreciate your patience!`
         return 'We apologize, the openai API is unresponsive, not Luna, please try again later.'
         return {
             error: 'Sorry, the openai GPT API failed, not Luna, please try again later.'
