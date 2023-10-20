@@ -282,12 +282,24 @@ module.exports = async (req, res) => {
 
 
             console.log("RESPONSE: ", JSON.stringify(gpt3Response));
-            const textResponse = gpt3Response.choices[0].message.content;
-            const promptTokens = gpt3Response.usage?.prompt_tokens;
-            const completionTokens = gpt3Response.usage?.completion_tokens;
-            const totalTokens = gpt3Response.usage?.total_tokens;
+            let textResponse;
+            let promptTokens;
+            let completionTokens;
+            let totalTokens;
+            let error = false;
+
+            try {
+            textResponse = gpt3Response.choices[0].message.content;
+            promptTokens = gpt3Response.usage?.prompt_tokens;
+            completionTokens = gpt3Response.usage?.completion_tokens;
+            totalTokens = gpt3Response.usage?.total_tokens;
+            } catch (err) {
+                error = true;
+                textResponse = 'Sorry, the openai GPT API failed, not Luna, please try again later.'
+            }
 
 
+            if(!error) {
             console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
             // We want to save messages if it doesnt include !notag
@@ -338,6 +350,7 @@ module.exports = async (req, res) => {
             // res.status(204).end();
             // res.send(`<Response><Message>${welcomeText}</Message></Response>`);
 
+        }
             await sendResponse(textResponse, fromNumber);
 
             // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
@@ -508,8 +521,8 @@ async function getGpt4Response(prompt, history) {
             console.log("IN ELSE LINE 325: ");
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-3.5-turbo",
-                // model: "gpt-4",
+                // model: "gpt-3.5-turbo",
+                model: "gpt-4",
                 messages: prompt,
             });
             //  ANOther idea is to summarize prompt before it reaches 8k
@@ -530,12 +543,10 @@ async function getGpt4Response(prompt, history) {
 
         console.error(`[ ERROR ][ Chat Completion ] - Failed to get GPT-4 response, error: ${err}`);
         console.error(`[ ERROR ][ Chat Completion ] - Error message: ${err.message}`);
+        return 'We apologize, the openai API is unresponsive, not Luna, please try again later.'
         return {
-            error: 'Sorry, openai GPT failed, not Luna, please try again later.'
+            error: 'Sorry, the openai GPT API failed, not Luna, please try again later.'
         };
-
-
-        throw err;
     }
     //return response.data.choices[0].text.trim();
 }
