@@ -295,7 +295,7 @@ module.exports = async (req, res) => {
             totalTokens = gpt3Response.usage?.total_tokens;
             } catch (err) {
                 error = true;
-                textResponse = 'Sorry, the openai GPT API failed, not Luna, please try again later.'
+                textResponse = gpt3Response
             }
 
 
