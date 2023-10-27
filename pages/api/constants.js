@@ -30,7 +30,7 @@ Hang tight, and enjoy this wild ride through the Luna universe!`,
     `Hello {profile}, you've officially entered the Luna-verse...`,
 ];
 export const spanishWelcomeMessage = [
-    `¡Hola {profile}! Bienvenido a Luna, tengo muchas herramientas útiles para ofrecer. Puedo proporcionar respuestas rápidas, crear imágenes, transcribir audio o recordar conversaciones pasadas. Es como tener a un superhéroe en tu bolsillo. ¡Estoy aquí para asistirte!`,
+    `¡Hola {profile}! Bienvenida/o a Luna, tengo muchas herramientas útiles para ofrecer. Puedo proporcionar respuestas rápidas, crear imágenes, transcribir audio o recordar conversaciones pasadas. Es como tener a un superhéroe en tu bolsillo. ¡Estoy aquí para asistirte!`,
 
     `¡Hola {profile}! Te doy la bienvenida oficial al Lunaverso, donde los chatbots son tan astutos que te harán cuestionar tus propias habilidades. ¿Necesitas respuestas, imágenes generadas, audios transcritos, o revivir nuestras antiguas conversaciones? ¡Luna lo tiene todo!
 
