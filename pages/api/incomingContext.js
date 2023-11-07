@@ -670,7 +670,7 @@ async function visionApi(mediaUrl, prompt) {
 
     try {
     // const response = await visionOpenAi.chat.completions.create({
-        response = await openai.createChatCompletion({
+        const response = await openai.createChatCompletion({
         model: "gpt-4-vision-preview",
         messages: [
           {
