@@ -669,7 +669,8 @@ async function visionApi(mediaUrl, prompt) {
     console.log(`[ VISION API ]: Sending media url to OPENAI vision api`);
 
     try {
-    const response = await visionOpenAi.chat.completions.create({
+    // const response = await visionOpenAi.chat.completions.create({
+        response = await openai.createChatCompletion({
         model: "gpt-4-vision-preview",
         messages: [
           {
