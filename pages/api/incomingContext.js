@@ -686,7 +686,7 @@ async function visionApi(mediaUrl, prompt) {
         ],
       });
 
-      console.log("VISION RESPONSE: ", JSON.stringify(response));
+      console.log("VISION RESPONSE: ", response);
       console.log("VISION RESPONSE CHOICES: ", JSON.stringify(response.choices[0]));
 
       return response.choices[0];
