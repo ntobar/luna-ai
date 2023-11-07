@@ -10,6 +10,7 @@ const userRepository = require('../../db/userRepository');
 const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
+import { json } from 'body-parser';
 import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
 import { GPTTokens } from 'gpt-tokens';
 // import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer/esm/model/gpt-4';
@@ -33,6 +34,8 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
         console.log("Received webhook Request, initializing... ");
         // testConnection();
+
+        console.log(`${json.stringify(req.body)}`)
         const incomingMessage = req.body.Body;
         const incomingMediaUrl = req.body.MediaUrl0;
         const fromNumber = req.body.From;
@@ -131,10 +134,16 @@ module.exports = async (req, res) => {
             } else {
 
             // Generate an image based on the message body
+            // imageResult = await openai.createImage({
+            //     model: "dall-e-3",
+            //     prompt: incomingMessage,
+            //     size: "256x256",
+            // });
+
             imageResult = await openai.createImage({
                 model: "dall-e-3",
                 prompt: incomingMessage,
-                size: "256x256",
+                size: "1024x1024",
             });
         }
 
