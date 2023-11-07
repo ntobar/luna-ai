@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
         console.log("Received webhook Request, initializing... ");
         // testConnection();
 
-        console.log(`${json.stringify(req.body)}`)
+        console.log(`${JSON.stringify(req.body)}`)
         const incomingMessage = req.body.Body;
         const incomingMediaUrl = req.body.MediaUrl0;
         const fromNumber = req.body.From;
