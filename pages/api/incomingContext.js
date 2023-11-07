@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { Configuration, OpenAIApi } = require("openai");
+const { Configuration, OpenAIApi, OpenAI } = require("openai");
 const twilio = require('twilio');
 const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
@@ -26,6 +26,7 @@ const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
+const visionOpenAi = new OpenAI()
 
 
 // START MAIN FUNCTION
@@ -668,7 +669,7 @@ async function visionApi(mediaUrl, prompt) {
     console.log(`[ VISION API ]: Sending media url to OPENAI vision api`);
 
     try {
-    const response = await openai.chat.completions.create({
+    const response = await visionOpenAi.chat.completions.create({
         model: "gpt-4-vision-preview",
         messages: [
           {
@@ -683,6 +684,9 @@ async function visionApi(mediaUrl, prompt) {
           },
         ],
       });
+
+      console.log("VISION RESPONSE: ", JSON.stringify(response));
+      console.log("VISION RESPONSE CHOICES: ", JSON.stringify(response.choices[0]));
 
       return response.choices[0];
 
