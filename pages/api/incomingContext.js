@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { Configuration, OpenAIApi, OpenAI } = require("openai");
+const { Configuration, OpenAIApi } = require("openai");
 const twilio = require('twilio');
 const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
@@ -26,7 +26,7 @@ const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
-const visionOpenAi = new OpenAI()
+// const visionOpenAi = new OpenAI()
 
 
 // START MAIN FUNCTION
