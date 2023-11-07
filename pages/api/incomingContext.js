@@ -514,15 +514,16 @@ async function getGpt4Response(prompt, history) {
             //   messages: [{ role: "user", content: prompt }],
             // });
             response = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo-16k",
+                // model: "gpt-3.5-turbo-16k",
+                model: "gpt-4-1106-preview",
                 messages: [{ role: "user", content: prompt }],
             });
         } else {
             console.log("IN ELSE LINE 325: ");
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                // model: "gpt-3.5-turbo",
-                model: "gpt-4",
+                model: "gpt-4-1106-preview",
+                // model: "gpt-4",
                 messages: prompt,
             });
             //  ANOther idea is to summarize prompt before it reaches 8k
@@ -597,6 +598,8 @@ async function sendTwilioMessage(gpt4Response, toNumber) {
     } catch (err) {
 
     }
+
+    async
 }
 
 async function sendResponse(gpt4Response, toNumber) {
