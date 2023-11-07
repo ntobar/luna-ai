@@ -119,11 +119,24 @@ module.exports = async (req, res) => {
 
             console.log(`[ Image Generation ] - Sending request to OPENAI API`);
 
+            let imageResult;
+            if(incomingMessage.toLowerCase().includes('hd')) {
+
+                imageResult = await openai.createImage({
+                    model: "dall-e-3",
+                    prompt: incomingMessage,
+                    size: "256x256",
+                    quality: "hd"
+                });
+            } else {
+
             // Generate an image based on the message body
-            const imageResult = await openai.createImage({
+            imageResult = await openai.createImage({
+                model: "dall-e-3",
                 prompt: incomingMessage,
                 size: "256x256",
             });
+        }
 
             console.log(`[ Image Generation ] - OPENAI response received, image url: ${imageResult.data.data[0].url}`);
             console.log(`[ Image Generation ] - Sending image to Twilio Client`);
