@@ -598,8 +598,6 @@ async function sendTwilioMessage(gpt4Response, toNumber) {
     } catch (err) {
 
     }
-
-    async
 }
 
 async function sendResponse(gpt4Response, toNumber) {
