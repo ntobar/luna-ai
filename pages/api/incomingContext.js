@@ -125,7 +125,7 @@ module.exports = async (req, res) => {
                 imageResult = await openai.createImage({
                     model: "dall-e-3",
                     prompt: incomingMessage,
-                    size: "256x256",
+                    size: "1024x1024",
                     quality: "hd"
                 });
             } else {
