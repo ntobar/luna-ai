@@ -684,6 +684,7 @@ async function visionApi(mediaUrl, prompt) {
             ],
           },
         ],
+        max_tokens: 500,
       });
 
       console.log("VISION RESPONSE: ", response);
