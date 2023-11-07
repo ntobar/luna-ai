@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
         console.log(`${JSON.stringify(req.body)}`)
         const incomingMessage = req.body.Body;
         const incomingMediaUrl = req.body.MediaUrl0;
+        const incomingMediaContentType = req.body.MediaContentType0;
         const fromNumber = req.body.From;
         const profileName = req.body.ProfileName;
 
@@ -100,8 +101,11 @@ module.exports = async (req, res) => {
         // console.log("****** REQ BODY: ", req.body);
         console.log(`[ Incoming Request ] Received prompt: ${incomingMessage} from number ${fromNumber}`);
 
-        // Handle voice note
+        // Handle media
         if (incomingMediaUrl) {
+
+            // Handle voice note
+            if(incomingMediaContentType == "audio/ogg") {
             console.log(`[ Audio Transcription  ] - Request received for media with url ${incomingMediaUrl}`);
             const transcription = await transcribeAudio(incomingMediaUrl);
 
@@ -110,6 +114,16 @@ module.exports = async (req, res) => {
             //res.status(204).end();
             await sendResponse(transcription, fromNumber);
             console.log(`[ Audio Transcription ] - Response sent`);
+
+            } else if(incomingMediaContentType == "image/jpeg" && incomingMessage) {
+                console.log(`[ VISION API ] - Request received for media with url`);
+
+                const visionResponse = await visionApi(incomingMediaUrl, incomingMessage);
+                await sendResponse(visionResponse, fromNumber);
+                console.log(`[ VISION API ] - Response sent`);
+
+            }
+        
 
         } else if (incomingMessage.toLowerCase().includes('image')) {
 
@@ -647,6 +661,37 @@ async function sendResponse(gpt4Response, toNumber) {
         console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Error message: ${err.message}`);
         throw err;
     }
+}
+
+async function visionApi(mediaUrl, prompt) {
+
+    console.log(`[ VISION API ]: Sending media url to OPENAI vision api`);
+
+    try {
+    const response = await openai.chat.completions.create({
+        model: "gpt-4-vision-preview",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              {
+                type: "image_url",
+                image_url: mediaUrl
+              },
+            ],
+          },
+        ],
+      });
+
+      return response.choices[0];
+
+    } catch(err) {
+        console.log(`[ ERROR ][ VISION API ]: Error message: ${err.message}`);
+
+    }
+
+
 }
 
 async function transcribeAudio(mediaUrl) {
