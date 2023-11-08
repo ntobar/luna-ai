@@ -127,26 +127,23 @@ module.exports = async (req, res) => {
             let imageResult;
             if (incomingMessage.toLowerCase().includes('hd')) {
 
-                imageResult = await openai.createImage({
-                    model: "dall-e-3",
-                    prompt: incomingMessage,
-                    size: "1024x1024",
-                    quality: "hd"
-                });
-            } else {
-
-                // Generate an image based on the message body
+                imageResult = await createImage(incomingMessage, true);
                 // imageResult = await openai.createImage({
                 //     model: "dall-e-3",
                 //     prompt: incomingMessage,
-                //     size: "256x256",
+                //     size: "1024x1024",
+                //     quality: "hd"
                 // });
+            } else {
 
-                imageResult = await openai.createImage({
-                    model: "dall-e-3",
-                    prompt: incomingMessage,
-                    size: "1024x1024",
-                });
+
+                imageResult = await createImage(incomingMessage, false);
+
+                // imageResult = await openai.createImage({
+                //     model: "dall-e-3",
+                //     prompt: incomingMessage,
+                //     size: "1024x1024",
+                // });
             }
 
             console.log(`[ Image Generation ] - OPENAI response received, image url: ${imageResult.data.data[0].url}`);
@@ -491,6 +488,35 @@ async function sendResponse(gpt4Response, toNumber) {
         console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Failed to send messages to Twilio client, error: ${err}`);
         console.log(`[ ERROR ][ Chat Completion ][ Twilio Callback ]: Error message: ${err.message}`);
         throw err;
+    }
+}
+
+async function generateImage(prompt, isHd) {
+
+    try {
+        let imageResult;
+        if (isHd) {
+
+            imageResult = await openai.createImage({
+                model: "dall-e-3",
+                prompt: prompt,
+                size: "1024x1024",
+                quality: "hd"
+            });
+        
+        } else {
+
+            imageResult = await openai.createImage({
+                model: "dall-e-3",
+                prompt: prompt,
+                size: "1024x1024",
+            });
+        }
+
+        return imageResult
+    } catch(err) {
+
+        console.log(`[ ERROR ][ Image Generation ]- Failed to generate image, error: ${err}`);
     }
 }
 
