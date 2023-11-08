@@ -127,7 +127,7 @@ module.exports = async (req, res) => {
             let imageResult;
             if (incomingMessage.toLowerCase().includes('hd')) {
 
-                imageResult = await createImage(incomingMessage, true);
+                imageResult = await generateImage(incomingMessage, true);
                 // imageResult = await openai.createImage({
                 //     model: "dall-e-3",
                 //     prompt: incomingMessage,
@@ -137,7 +137,7 @@ module.exports = async (req, res) => {
             } else {
 
 
-                imageResult = await createImage(incomingMessage, false);
+                imageResult = await generateImage(incomingMessage, false);
 
                 // imageResult = await openai.createImage({
                 //     model: "dall-e-3",
