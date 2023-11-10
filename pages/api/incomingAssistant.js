@@ -115,85 +115,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // Handle voice note
-        // if (incomingMediaContentType == "audio/ogg") {
-        //     console.log(`[ Audio Transcription  ] - Request received for media with url ${incomingMediaUrl}`);
-
-        //     // const transcription = await transcribeAudio(incomingMediaUrl);
-
-        //     incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
-
-        //     // await sendResponse(transcription, fromNumber);
-        //     // console.log(`[ Audio Transcription ] - Response sent`);
-
-        //     // Handl image
-        // }
-
-
-        // incomingMediaContentType = "audio/ogg";
-
-        // const transcribeResponse = await transcribeAudio(incomingMediaUrl);
-        // console.log("transcrubeAudiio: ", transcribeResponse);
-        // return transcribeResponse;
-
-        // console.log("incomingMediaContentType: ", incomingMediaContentType);
         if (incomingMediaContentType == "audio/ogg") {
-            // const conversion = await convertAudioFile(incomingMediaUrl);
-            // incomingMediaUrl = conversion.config.url;
-            // console.log("CONFIG URL: ", incomingMediaUrl );
-
 
             incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
 
-            // const tempFilePath = await preProcessAudioFile(incomingMediaUrl);
-            // console.log("TEMP FILE PATH: ", tempFilePath);
-            // incomingMediaUrl = await uploadFileToOpenAI(tempFilePath);
-            // console.log("FILE: ", incomingMediaUrl);
-            // //         // Delete the temporary file
-            // fs.unlink(tempFilePath, (err) => {
-            //     if (err) console.error('Error deleting temporary file:', err);
-            // });
-
         }
-        // Download the converted MP3 file
-
-        //WORKING!!!!!
-        // const response = await axios.get(incomingMediaUrl, { responseType: 'stream' });
-        // console.log(`[ Audio Transcription  ][ CloudConvert ] - Successfully downloaded converted mp3 file`);
-
-        // // Ensure the directory exists
-        // await fs.ensureDir(path.join(__dirname, 'tmp'));
-
-        // const tempFilePath = path.join(__dirname, 'tmp', 'converted.mp3');
-        // const writer = fs.createWriteStream(tempFilePath);
-
-        // response.data.pipe(writer);
-
-        // await new Promise((resolve, reject) => {
-        //     writer.on('finish', resolve);
-        //     writer.on('error', reject);
-        // });
-
-        // // Read the MP3 file and send it to OpenAI's transcription API
-        // // const mp3File = fs.createReadStream(tempFilePath);
-        //     const respa = await transcribeAudio(tempFilePath);
-        //     console.log("TRANSCRIPTION 134: ", respa);
-        //     return;
-        // }
-        // END WORKINGGGG
-
-        // const respolo =  await transcribeAudio(incomingMediaUrl);
-        // console.log("responolo: ", respolo);
-
-
-        // delete
-        // end delete
-
-        // incomingMessage = "What dog breed is this?";
-
-
-
-
 
         let messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl);
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
@@ -1011,6 +937,7 @@ async function transcribeAudio(incomingMediaUrl) {
 
 }
 
+
 async function setupAssistant() {
     const assistant = await openai.beta.assistants.create({
         model: "gpt-4-1106-preview", // Replace with the correct model you are using
@@ -1224,11 +1151,17 @@ async function uploadFileToOpenAI(incomingMediaUrl) {
     }
 }
 
+let assistant;
 
 async function handleMessage(userId, userMessage, mediaUrl) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
     // Set up the Assistant
-    const assistant = await setupAssistant();
+    if(!globalAssistant) {
+        console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
+
+        assistant = await setupAssistant();
+    }
+
 
     // Get or create a thread for the user
     const threadId = await getOrCreateThread(userId);
@@ -1268,7 +1201,7 @@ async function handleMessage(userId, userMessage, mediaUrl) {
     // } while (runStatus.status === 'active');
     while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
         // Wait for a couple of seconds before checking the status again
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         runStatus = await checkRunStatus(threadId, run.id);
     }
 
