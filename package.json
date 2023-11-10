@@ -29,7 +29,7 @@
     "gpt-tokens": "^1.1.2",
     "langdetect": "^0.2.1",
     "next": "^13.4.4",
-    "openai": "^3.3.0",
+    "openai": "^4.16.1",
     "openai-edge": "^1.0.0",
     "pg": "^8.11.1",
     "pg-promise": "^11.5.0",
