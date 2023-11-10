@@ -1156,7 +1156,7 @@ let assistant;
 async function handleMessage(userId, userMessage, mediaUrl) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
     // Set up the Assistant
-    if(!globalAssistant) {
+    if(!assistant) {
         console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
 
         assistant = await setupAssistant();
