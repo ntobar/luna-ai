@@ -51,8 +51,35 @@ async function updateLastSeen(userId) {
     }
 }
 
+// Function to get a user's thread_id given their user_id
+async function getUserThreadId(userId) {
+    try {
+        const result = await db.one('SELECT thread_id FROM users WHERE id = $1', [userId]);
+        console.log(`[ Users Table ] - Retrieved thread_id for user_id = ${userId}`);
+        return result.thread_id;
+    } catch (error) {
+        console.error('[ ERROR ][ Users Table ] - Error retrieving thread_id:', error);
+        throw error;
+    }
+}
+
+// Function to update a user's thread_id given their user_id
+async function updateUserThreadId(userId, threadId) {
+    try {
+        const result = await db.none('UPDATE users SET thread_id = $1 WHERE id = $2', [threadId, userId]);
+        console.log(`[ Users Table ] - Updated thread_id for user_id = ${userId}`);
+        return true;
+    } catch (error) {
+        console.error('[ ERROR ][ Users Table ] - Error updating thread_id:', error);
+        throw error;
+    }
+}
+
+
 module.exports = {
     getUserByWhatsAppNumber,
     createUser,
-    updateLastSeen
+    updateLastSeen,
+    getUserThreadId,
+    updateUserThreadId
 };
