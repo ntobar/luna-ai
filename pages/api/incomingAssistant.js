@@ -63,14 +63,16 @@ module.exports = async (req, res) => {
         // incomingMediaUrl = "https://api.twilio.com/2010-04-01/Accounts/AC6d3289354e8e27b6711e450b3e055d40/Messages/MM91c99ed67e54d9b9f93cb885f8747245/Media/MEcd4a38c3191c9cda5ba32f4dc4b8b0a"
 
         // incomingMediaUrl = "https://cdn.britannica.com/78/232778-050-D3701AB1/English-bulldog-dog.jpg";
-        // // incomingMediaUrl = "https://eu-central.storage.cloudconvert.com/tasks/dd2d63fb-61f4-4fe0-a540-895e61ba6ccd/file.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20231109%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20231109T225648Z&X-Amz-Expires=86400&X-Amz-Signature=44be6dd39bd28a6fab7d26da71d36401a13b6826427ec08031dbe779b75b11d3&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22file.mp3%22&response-content-type=audio%2Fmpeg&x-id=GetObject";
-        // // incomingMediaUrl = "https://eu-central.storage.cloudconvert.com/tasks/1ab0ccd4-9eae-4486-bb5c-2e41e13ed06d/file.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20231109%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20231109T200031Z&X-Amz-Expires=86400&X-Amz-Signature=fa956d246ff2216a61bfcb94a77cbbaaebe107f8638f5845c28062803486b32b&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22file.mp3%22&response-content-type=audio%2Fmpeg&x-id=GetObject";
+        // incomingMediaUrl = "https://eu-central.storage.cloudconvert.com/tasks/dd2d63fb-61f4-4fe0-a540-895e61ba6ccd/file.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20231109%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20231109T225648Z&X-Amz-Expires=86400&X-Amz-Signature=44be6dd39bd28a6fab7d26da71d36401a13b6826427ec08031dbe779b75b11d3&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22file.mp3%22&response-content-type=audio%2Fmpeg&x-id=GetObject";
+        // incomingMediaUrl = "https://api.twilio.com/2010-04-01/Accounts/AC6d3289354e8e27b6711e450b3e055d40/Messages/MMb2cf1f65ac49fdc87927858ca2aa3693/Media/ME2b93af76c6acf39c810074f7a90056be";
 
-        // fromNumber = 'whatsapp:+18572009432'
+        incomingMediaUrl = " https://api.twilio.com/2010-04-01/Accounts/AC6d3289354e8e27b6711e450b3e055d40/Messages/MMd5687b2d0544da6cdd01144c5ccf13a1/Media/MEe8af16ec017ed21775d1069dc32c8bf9";
+        // incomingMessage = "What is this picture?"
+        fromNumber = 'whatsapp:+18572009432'
 
         // Database handling
-        const whatsappNumber = fromNumber.replace('whatsapp:', '');
-        // const whatsappNumber = '+18572009432';
+        // const whatsappNumber = fromNumber.replace('whatsapp:', '');
+        const whatsappNumber = '+18572009432';
 
 
         // Check if the user exists
@@ -117,11 +119,15 @@ module.exports = async (req, res) => {
 
         if (incomingMediaContentType == "audio/ogg") {
 
-            incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
+            // incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
 
         }
 
-        let messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl);
+        // incomingMediaContentType = "image/jpeg";
+        incomingMediaContentType = "audio/ogg";
+
+
+        let messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
         console.log("MESSAGE RESPONSE: ", messageResponse);
 
@@ -482,14 +488,16 @@ async function getGpt4Response(prompt, history) {
             // });
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-4-1106-preview",
+                // model: "gpt-4-1106-preview",
+                model: "gpt-3.5",
+
                 messages: [{ role: "user", content: prompt }],
             });
         } else {
             console.log("IN ELSE LINE 325: ");
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-4-1106-preview",
+                model: "gpt-3.5",
                 // model: "gpt-4",
                 messages: prompt,
             });
@@ -635,7 +643,7 @@ async function generateImage(textPrompt, isHd) {
     }
 }
 
-async function visionApi(mediaUrl, prompt) {
+async function visionApi(mediaUrl, prompt, mediaType) {
 
     console.log(`[ VISION API ]: Sending media url to OPENAI vision api with prompt: ${prompt}`);
 
@@ -712,7 +720,7 @@ async function convertAudioFile(mediaUrl) {
 
         let exportTask = job.tasks.find(task => task.name === 'export-my-file');
         const mp3FileUrl = exportTask.result.files[0].url;
-        
+
         console.log(`[ Audio Transcription  ][ CloudConvert ] - Successfully converted audio file from OGA to MP3. Converted file url: ${mp3FileUrl}`);
         console.log(`[ Audio Transcription  ][ CloudConvert ] - Waiting to download converted audio file with url: ${mp3FileUrl}`);
 
@@ -939,20 +947,22 @@ async function transcribeAudio(incomingMediaUrl) {
 
 
 async function setupAssistant() {
+    console.log(`[ Assistants API ][ Assistant Setup ] - Setting up new assistant...`);
     const assistant = await openai.beta.assistants.create({
-        model: "gpt-4-1106-preview", // Replace with the correct model you are using
-        instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input.",
+        // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+        model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+        instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required",
         tools: [
             {
                 type: "function",
                 function: {
                     name: "transcribeAudio",
-                    description: "Transcribe audio from a given URL",
+                    description: "Transcribe an audio from a given URL. The media url sent will be a twilio url in the form api.twilio.com.",
                     parameters: {
                         type: "object",
                         properties: {
                             // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
-                            incomingMediaUrl: { type: "string", description: "The audio file media url to transcribe" }
+                            incomingMediaUrl: { type: "string", description: "The api.twilio.com audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" }
                         },
                         required: ["incomingMediaUrl"]
 
@@ -979,14 +989,15 @@ async function setupAssistant() {
                 type: "function",
                 function: {
                     name: "visionApi",
-                    description: "Use image-based prompts with the Vision API",
+                    description: "Call the visionApi function to respond to the user when they send a twilio media url and a text prompt.",
                     parameters: {
                         type: "object",
                         properties: {
-                            mediaUrl: { type: "string", description: "URL of the image" },
-                            prompt: { type: "string", description: "The prompt for the vision API" }
+                            mediaUrl: { type: "string", description: "The api.twilio.com Media URL of the image, and its required. The mediaUrl will be from api.twilio.com, and you should treat is as a jpeg image." },
+                            prompt: { type: "string", description: "The prompt for the vision API, and its required" },
+                            mediaType: { type: "string", description: "The media type for the Twilio media url picture" }
                         },
-                        required: ["mediaUrl", "prompt"]
+                        required: ["mediaUrl", "prompt", "mediaType"]
                     }
                 }
             }
@@ -994,12 +1005,16 @@ async function setupAssistant() {
         ]
     });
 
+    console.log(`[ Assistants API ][ Assistant Setup ] - Successfully sett up new assistant with id: ${assistant.id}`);
+
+
     return assistant;
 }
 
 async function getOrCreateThread(userId) {
     // Check if there's an existing thread ID for the given user in the storage
     let threadId = await getThreadFromStorage(userId);
+
 
     // If a thread ID does not exist, create a new thread
     if (!threadId) {
@@ -1025,6 +1040,7 @@ async function saveThreadToStorage(userId, threadId) {
 async function createThread() {
     // Create a Thread for the user conversation
     const thread = await openai.beta.threads.create();
+    console.log(`[ Assistants API ][ Create Thread ] - Successfully created new thread: ${thread}`);
     return thread;
 }
 
@@ -1046,7 +1062,9 @@ async function addMessageToThread(threadId, userMessage, mediaUrl) {
         if (mediaUrl) {
             await openai.beta.threads.messages.create(threadId, {
                 role: "user",
-                content: mediaUrl // assuming this is a string URL to the image
+                content: mediaUrl, // assuming this is a string URL to the image
+
+                // content: `image: ${mediaUrl}`, // assuming this is a string URL to the image
             });
         }
 
@@ -1059,15 +1077,36 @@ async function addMessageToThread(threadId, userMessage, mediaUrl) {
 }
 
 
-async function createRun(threadId, assistantId, additionalInstructions) {
+async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
     console.log("[ Assistants API ][ Create Run ] - Creating run for thread id: ", threadId);
 
     try {
-        // Create a Run to get the Assistant's response
-        const run = await openai.beta.threads.runs.create(threadId, {
-            assistant_id: assistantId,
-            // instructions: additionalInstructions,
-        });
+
+        let run;
+        if (mediaUrl) {
+            console.log(`[ Assistants API ][ Create Run ] - Media url found, creating run for url: ${mediaUrl}`);
+
+            if (mediaContentType == "image/jpeg") {
+                // Create a Run to get the Assistant's response
+                run = await openai.beta.threads.runs.create(threadId, {
+                    assistant_id: assistantId,
+                    instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an image for analysis.`
+
+                    // instructions: additionalInstructions,
+                });
+            } else {
+                run = await openai.beta.threads.runs.create(threadId, {
+                    assistant_id: assistantId,
+                    instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an audio for analysis.`
+
+
+                });
+            }
+        } else {
+            run = await openai.beta.threads.runs.create(threadId, {
+                assistant_id: assistantId,
+            });
+        }
 
         console.log("[ Assistants API ][ Create Run ] - Successfully created run for thread id: ", threadId);
         return run;
@@ -1081,6 +1120,11 @@ async function createRun(threadId, assistantId, additionalInstructions) {
 async function checkRunStatus(threadId, runId) {
     // Periodically check the status of the Run
     const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
+    console.log(`[ Assistants API ][ Run Status ] - Current Run Status --> ${runStatus.status}`);
+    if (runStatus.status == "failed") {
+        console.log("[ ERROR ][ Assistants API ][ Check Run Status ] - Run status FAILED, reason: ", runStatus);
+        return runStatus.last_error;
+    }
     return runStatus;
 }
 
@@ -1151,26 +1195,34 @@ async function uploadFileToOpenAI(incomingMediaUrl) {
     }
 }
 
-let assistant;
+// let assistant;
 
-async function handleMessage(userId, userMessage, mediaUrl) {
+async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
     // Set up the Assistant
-    if(!assistant) {
-        console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
+    let assistant = await setupAssistant();
+    // if(!assistant) {
+    //     console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
 
-        assistant = await setupAssistant();
-    }
+    //     assistant = await setupAssistant();
+    // }
+
+    let assistant_id = assistant.id;
+    // Hard-coded assistant so we dont create a new one for each request
+    // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
 
 
     // Get or create a thread for the user
     const threadId = await getOrCreateThread(userId);
+    // const thread = await createThread();
+    // const threadId = thread.id;
 
     // Add the incoming message or media to the thread
     await addMessageToThread(threadId, userMessage, mediaUrl);
 
-    // Create a run to process the input
-    const run = await createRun(threadId, assistant.id);
+    // Create a run to process the input. NOTE: Normally we would pass it assistant.id from above
+    // but since we are using the hard-coded one, were just passing that value
+    const run = await createRun(threadId, assistant_id, mediaUrl, mediaType);
 
 
     // const RUN_TIMEOUT = 15000; // Maximum time to wait for a run to complete in milliseconds.
@@ -1200,16 +1252,21 @@ async function handleMessage(userId, userMessage, mediaUrl) {
     //     await new Promise(resolve => setTimeout(resolve, 2000));
     // } while (runStatus.status === 'active');
     while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
+
         // Wait for a couple of seconds before checking the status again
         await new Promise(resolve => setTimeout(resolve, 1000));
         runStatus = await checkRunStatus(threadId, run.id);
+        // if (runStatus.status == "failed") {
+        //     console.log("[ ERROR ][ Assistants API ][ Run Status ] - Run status failed, reason: ", run);
+        //     return run.last_error;
+        // }
     }
 
     // If the assistant requires an action to be performed, handle it
     if (runStatus.status === "requires_action") {
         console.log("[ Assistants API ][ Action Required ] - The assistant requires an action to be performed");
-        // Call handleRequiredAction with necessary parameters
-        return await handleRequiredAction(runStatus.required_action, assistant.id, run.id, threadId);
+        // Call handleRequiredAction with necessary parameters. NOTE: Also passing in hard-coded id instead of assistant.id
+        return await handleRequiredAction(runStatus.required_action, assistant_id, run.id, threadId);
     }
 
     // If no action is required and the run is completed, get the assistant's messages
@@ -1257,28 +1314,6 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
         console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
 
         // Determine which function to call based on the required action
-        // switch (functionName) {
-        //     case 'transcribeAudio':
-        //         return transcribeAudio(args.mediaUrl).then(output => ({
-        //             tool_call_id: toolCall.tool_call_id,
-        //             output: { type: 'text', data: { text: output } },
-        //         }));
-        //     case 'generateImage':
-        //         console.log("ARGS: ", args);
-        //         return generateImage(args.prompt, args.isHd).then(output => ({
-        //             tool_call_id: toolCall.tool_call_id,
-        //             output: { type: 'image', data: { image_url: output } },
-        //         }));
-        //     case 'visionApi':
-        //         return visionApi(args.mediaUrl, args.prompt).then(output => ({
-        //             tool_call_id: toolCall.tool_call_id,
-        //             output: { type: 'text', data: { text: output } },
-        //         }));
-        //     default:
-        //         throw new Error(`Unknown function requested: ${functionName}`);
-        // }
-
-        // Determine which function to call based on the required action
         switch (functionName) {
             case 'transcribeAudio':
                 console.log("ARGS OBJECT: ", argsObject);
@@ -1309,7 +1344,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
             case 'visionApi':
                 const argsObjectJson = JSON.parse(args);
 
-                const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt);
+                const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt, argsObjectJson.mediaType);
                 console.log(`VISION OUTPUT: ${visionOutput}`);
                 assistantResponse.setTextResponse(visionOutput);
 
@@ -1384,9 +1419,9 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
             (message) => message.role === "assistant"
         )
         .pop();
-    
 
-        console.log("lastMessageForRun: ", lastMessageForRun);
+
+    console.log("lastMessageForRun: ", lastMessageForRun);
 
     // console.log("lastMessageForRun: ", lastMessageForRun.content[0].text);
 
