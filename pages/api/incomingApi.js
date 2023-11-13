@@ -379,14 +379,14 @@ async function getGpt4Response(prompt, history) {
             // });
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-3.5",
+                model: "gpt-3.5-turbo-1106",
                 messages: [{ role: "user", content: prompt }],
             });
         } else {
             console.log("IN ELSE LINE 325: ");
             response = await openai.createChatCompletion({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-3.5",
+                model: "gpt-3.5-turbo-1106",
                 // model: "gpt-4",
                 messages: prompt,
             });
