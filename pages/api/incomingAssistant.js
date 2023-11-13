@@ -14,7 +14,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { json } from 'body-parser';
-import { englishWelcomeMessage, spanishWelcomeMessage } from './constants';
+import { englishWelcomeMessage, spanishWelcomeMessage, openaiErrorMessage, errorMessage } from './constants';
 import { GPTTokens } from 'gpt-tokens';
 import { assert } from 'console';
 // import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer/esm/model/gpt-4';
@@ -134,7 +134,12 @@ module.exports = async (req, res) => {
         // incomingMediaContentType = "audio/ogg";
 
 
-        let messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
+        let messageResponse;
+        try {
+        messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
+        } catch(err) {
+            await sendTwilioMessage(errorMessage, fromNumber)
+        }
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
         console.log("MESSAGE RESPONSE: ", messageResponse);
 
@@ -526,7 +531,8 @@ async function getGpt4Response(prompt, history) {
 
         console.error(`[ ERROR ][ Chat Completion ] - Failed to get GPT-4 response, error: ${err}`);
         console.error(`[ ERROR ][ Chat Completion ] - Error message: ${err.message}`);
-        return `🚫 Oops! It seems there's a hiccup with the OpenAI GPT service right now. Luna is all good, but we rely on that service to handle some tasks. Please give it a moment and try again later. We apologize for any inconvenience and appreciate your patience!`
+        throw err;
+        // return `🚫 Oops! It seems there's a hiccup with the OpenAI GPT service right now. Luna is all good, but we rely on that service to handle some tasks. Please give it a moment and try again later. We apologize for any inconvenience and appreciate your patience!`
         return 'We apologize, the openai API is unresponsive, not Luna, please try again later.'
         return {
             error: 'Sorry, the openai GPT API failed, not Luna, please try again later.'
@@ -578,6 +584,9 @@ async function sendTwilioMessage(gpt4Response, toNumber) {
         }
 
     } catch (err) {
+    
+        console.log(`[ ERRROR ][ Chat Completion ][ Twilio Callback ]: Failed to send messages to Twilio client, error: ${err}`);
+
 
     }
 }
@@ -647,6 +656,7 @@ async function generateImage(textPrompt, isHd) {
     } catch (err) {
 
         console.log(`[ ERROR ][ Image Generation ]- Failed to generate image, error: ${err}`);
+        throw err;
     }
 }
 
@@ -682,7 +692,7 @@ async function visionApi(mediaUrl, prompt, mediaType) {
 
     } catch (err) {
         console.log(`[ ERROR ][ VISION API ]: Error message: ${err.message}`);
-
+        throw err;
     }
 
 
@@ -762,7 +772,7 @@ async function convertAudioFile(mediaUrl) {
         console.log(`[ Audio Transcription  ][ CloudConvert ] - Reading and sending file to OPENAI api`);
     } catch (err) {
         console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Error converting the file ${err}`);
-
+        throw err;
     }
 }
 
@@ -955,84 +965,98 @@ async function transcribeAudio(incomingMediaUrl) {
 
 async function setupAssistant() {
     console.log(`[ Assistants API ][ Assistant Setup ] - Setting up new assistant...`);
-    const assistant = await openai.beta.assistants.create({
-        // model: "gpt-4-1106-preview", // Replace with the correct model you are using
-        model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
-        instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required",
-        tools: [
-            {
-                type: "function",
-                function: {
-                    name: "transcribeAudio",
-                    description: "Transcribe an audio from a given URL. The media url sent will be a twilio url in the form api.twilio.com.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
-                            incomingMediaUrl: { type: "string", description: "The api.twilio.com audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" }
-                        },
-                        required: ["incomingMediaUrl"]
+    try {
+        const assistant = await openai.beta.assistants.create({
+            // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+            model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+            instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required",
+            tools: [
+                {
+                    type: "function",
+                    function: {
+                        name: "transcribeAudio",
+                        description: "Transcribe an audio from a given URL. The media url sent will be a twilio url in the form api.twilio.com.",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
+                                incomingMediaUrl: { type: "string", description: "The api.twilio.com audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" }
+                            },
+                            required: ["incomingMediaUrl"]
 
-                        // required: ["mediaUrl", "tempFilePath"]
+                            // required: ["mediaUrl", "tempFilePath"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "generateImage",
+                        description: "Generate an image based on a prompt",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                textPrompt: { type: "string", description: "The prompt for the image" },
+                                isHd: { type: "boolean", description: "Whether to generate the image in HD" }
+                            },
+                            required: ["textPrompt"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "visionApi",
+                        description: "Call the visionApi function to respond to the user when they send a twilio media url and a text prompt.",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                mediaUrl: { type: "string", description: "The api.twilio.com Media URL of the image, and its required. The mediaUrl will be from api.twilio.com, and you should treat is as a jpeg image." },
+                                prompt: { type: "string", description: "The prompt for the vision API, and its required" },
+                                mediaType: { type: "string", description: "The media type for the Twilio media url picture" }
+                            },
+                            required: ["mediaUrl", "prompt", "mediaType"]
+                        }
                     }
                 }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "generateImage",
-                    description: "Generate an image based on a prompt",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            textPrompt: { type: "string", description: "The prompt for the image" },
-                            isHd: { type: "boolean", description: "Whether to generate the image in HD" }
-                        },
-                        required: ["textPrompt"]
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "visionApi",
-                    description: "Call the visionApi function to respond to the user when they send a twilio media url and a text prompt.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            mediaUrl: { type: "string", description: "The api.twilio.com Media URL of the image, and its required. The mediaUrl will be from api.twilio.com, and you should treat is as a jpeg image." },
-                            prompt: { type: "string", description: "The prompt for the vision API, and its required" },
-                            mediaType: { type: "string", description: "The media type for the Twilio media url picture" }
-                        },
-                        required: ["mediaUrl", "prompt", "mediaType"]
-                    }
-                }
-            }
-            // Add more functions as needed
-        ]
-    });
+                // Add more functions as needed
+            ]
+        });
 
-    console.log(`[ Assistants API ][ Assistant Setup ] - Successfully sett up new assistant with id: ${assistant.id}`);
+        console.log(`[ Assistants API ][ Assistant Setup ] - Successfully set up new assistant with id: ${assistant.id}`);
 
 
-    return assistant;
+        return assistant;
+    } catch (err) {
+        console.log(`[ ERROR ][ Assistants API ][ Assistant Setup ] - Error setting up new assistant. Error: ${err}`);
+        throw new AssistantResponseError(openaiErrorMessage);
+    }
 }
 
 async function getOrCreateThread(userId) {
-    // Check if there's an existing thread ID for the given user in the storage
-    let threadId = await getThreadFromStorage(userId);
+    try {
+        // Check if there's an existing thread ID for the given user in the storage
+        let threadId = await getThreadFromStorage(userId);
 
 
-    // If a thread ID does not exist, create a new thread
-    if (!threadId) {
-        const thread = await openai.beta.threads.create();
-        threadId = thread.id;
+        // If a thread ID does not exist, create a new thread
+        if (!threadId) {
+            console.log(`[ Assistants API ][ Create Thread ] - Creating a new thread for user with id ${userId}`);
 
-        // Save the new thread ID with the user's information in the storage
-        await saveThreadToStorage(userId, threadId);
+            const thread = await openai.beta.threads.create();
+            threadId = thread.id;
+
+            // Save the new thread ID with the user's information in the storage
+            await saveThreadToStorage(userId, threadId);
+        }
+        console.log(`[ Assistants API ][ Create Thread ] - Fetched existing thread for user with id ${userId}`);
+
+
+        return threadId;
+    } catch (err) {
+        console.log(`[ ERROR ][ Assistants API ][ Create Thread ] - Error fetching/creating thread for user with id ${userId}, error: ${err}`);
+        throw new AssistantResponseError(openaiErrorMessage);
     }
-
-    return threadId;
 }
 
 async function getThreadFromStorage(userId) {
@@ -1054,7 +1078,6 @@ async function createThread() {
 
 async function addMessageToThread(threadId, userMessage, mediaUrl) {
     console.log("[ Assistants API ][ Message Thread ] - Adding message to thread...");
-    console.log("MEDIA URL ADDING TO THREAD IS: ", mediaUrl);
 
     try {
         // If there's a user message, send it as text
@@ -1079,7 +1102,7 @@ async function addMessageToThread(threadId, userMessage, mediaUrl) {
 
     } catch (err) {
         console.error(`[ ERROR ][ Assistants API ][ Message Thread ] - Error adding message to thread: ${err.message}`);
-        throw err; // It's usually a good practice to throw the error after logging so the calling function knows something went wrong.
+        throw new AssistantResponseError(openaiErrorMessage);
     }
 }
 
@@ -1091,9 +1114,10 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
 
         let run;
         if (mediaUrl) {
-            console.log(`[ Assistants API ][ Create Run ] - Media url found, creating run for url: ${mediaUrl}`);
 
             if (mediaContentType == "image/jpeg") {
+                console.log(`[ Assistants API ][ Create Run ] - Image Media url found, creating run with media instructions`);
+
                 // Create a Run to get the Assistant's response
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
@@ -1102,6 +1126,8 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
                     // instructions: additionalInstructions,
                 });
             } else {
+                console.log(`[ Assistants API ][ Create Run ] - Audio url found, creating run with media instructions`);
+
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
                     instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an audio for analysis.`
@@ -1119,26 +1145,36 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
         return run;
     } catch (err) {
         console.log("[ ERROR ][ Assistants API ][ Create Run ] - Error creating run for thread id: ", threadId);
-
+        throw new AssistantResponseError(openaiErrorMessage);
     }
 }
 
 
 async function checkRunStatus(threadId, runId) {
-    // Periodically check the status of the Run
-    const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
-    console.log(`[ Assistants API ][ Run Status ] - Current Run Status --> ${runStatus.status}`);
-    if (runStatus.status == "failed") {
-        console.log("[ ERROR ][ Assistants API ][ Check Run Status ] - Run status FAILED, reason: ", runStatus);
-        return runStatus.last_error;
+    try {
+        // Periodically check the status of the Run
+        const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
+        console.log(`[ Assistants API ][ Run Status ] - Current Run Status --> ${runStatus.status}`);
+        if (runStatus.status == "failed") {
+            console.log("[ ERROR ][ Assistants API ][ Check Run Status ] - Run status FAILED, reason: ", runStatus.last_error);
+            return runStatus.last_error;
+        }
+        return runStatus;
+    } catch (err) {
+        console.log("[ ERROR ][ Assistants API ][ Check Run Status ] - Run status retrieval FAILED, reason: ", err);
+        throw new AssistantResponseError(openaiErrorMessage);
     }
-    return runStatus;
 }
 
 async function getAssistantMessages(threadId) {
-    // Retrieve messages added by the Assistant to the Thread
-    const messages = await openai.beta.threads.messages.list(threadId);
-    return messages;
+    try {
+        // Retrieve messages added by the Assistant to the Thread
+        const messages = await openai.beta.threads.messages.list(threadId);
+        return messages;
+    } catch (err) {
+        console.log("[ ERROR ][ Assistants API ][ Get Assistant Messages ] - Error retrieving assistant messages: ", err);
+        throw new AssistantResponseError(openaiErrorMessage);
+    }
 }
 
 // async function handleMessage(userId, userMessage, mediaUrl) {
@@ -1206,244 +1242,255 @@ async function uploadFileToOpenAI(incomingMediaUrl) {
 
 async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
-    // Set up the Assistant
-    let assistant = await setupAssistant();
-    // if(!assistant) {
-    //     console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
+    const assistantResponse = new AssistantResponse();
 
-    //     assistant = await setupAssistant();
-    // }
+    try {
+        // Set up the Assistant
+        let assistant = await setupAssistant();
+        // if(!assistant) {
+        //     console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
 
-    let assistant_id = assistant.id;
-    // Hard-coded assistant so we dont create a new one for each request
-    // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
-
-
-    // Get or create a thread for the user
-    const threadId = await getOrCreateThread(userId);
-    // const thread = await createThread();
-    // const threadId = thread.id;
-
-    // Add the incoming message or media to the thread
-    await addMessageToThread(threadId, userMessage, mediaUrl);
-
-    // Create a run to process the input. NOTE: Normally we would pass it assistant.id from above
-    // but since we are using the hard-coded one, were just passing that value
-    const run = await createRun(threadId, assistant_id, mediaUrl, mediaType);
-
-
-    // const RUN_TIMEOUT = 15000; // Maximum time to wait for a run to complete in milliseconds.
-
-    // // Set a timeout to cancel the run if it takes too long
-    // const timeoutId = setTimeout(async () => {
-    //     try {
-    //         console.log(`Run ${run.id} is being cancelled due to timeout.`);
-    //         await openai.beta.threads.runs.cancel(threadId, run.id);
-    //     } catch (error) {
-    //         console.error('Error cancelling run:', error);
-    //     }
-    // }, RUN_TIMEOUT);
-
-    // Wait for the run to be completed before proceeding
-    // let runStatus = await checkRunStatus(threadId, run.id);
-
-    // Check the run status and process accordingly
-    let runStatus = await checkRunStatus(threadId, run.id);
-    // do {
-    //     runStatus = await checkRunStatus(threadId, run.id);
-    //     // If the run is completed or requires action, clear the timeout.
-    //     if (runStatus.status !== 'active') {
-    //         clearTimeout(timeoutId);
-    //     }
-    //     // Wait a short period before checking the status again
-    //     await new Promise(resolve => setTimeout(resolve, 2000));
-    // } while (runStatus.status === 'active');
-    while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
-
-        // Wait for a couple of seconds before checking the status again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await checkRunStatus(threadId, run.id);
-        // if (runStatus.status == "failed") {
-        //     console.log("[ ERROR ][ Assistants API ][ Run Status ] - Run status failed, reason: ", run);
-        //     return run.last_error;
+        //     assistant = await setupAssistant();
         // }
+
+        let assistant_id = assistant.id;
+        // Hard-coded assistant so we dont create a new one for each request
+        // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
+
+
+        // Get or create a thread for the user
+        const threadId = await getOrCreateThread(userId);
+        // const thread = await createThread();
+        // const threadId = thread.id;
+
+        // Add the incoming message or media to the thread
+        await addMessageToThread(threadId, userMessage, mediaUrl);
+
+        // Create a run to process the input. NOTE: Normally we would pass it assistant.id from above
+        // but since we are using the hard-coded one, were just passing that value
+        const run = await createRun(threadId, assistant_id, mediaUrl, mediaType);
+
+
+        // const RUN_TIMEOUT = 15000; // Maximum time to wait for a run to complete in milliseconds.
+
+        // // Set a timeout to cancel the run if it takes too long
+        // const timeoutId = setTimeout(async () => {
+        //     try {
+        //         console.log(`Run ${run.id} is being cancelled due to timeout.`);
+        //         await openai.beta.threads.runs.cancel(threadId, run.id);
+        //     } catch (error) {
+        //         console.error('Error cancelling run:', error);
+        //     }
+        // }, RUN_TIMEOUT);
+
+        // Wait for the run to be completed before proceeding
+        // let runStatus = await checkRunStatus(threadId, run.id);
+
+        // Check the run status and process accordingly
+        let runStatus = await checkRunStatus(threadId, run.id);
+        // do {
+        //     runStatus = await checkRunStatus(threadId, run.id);
+        //     // If the run is completed or requires action, clear the timeout.
+        //     if (runStatus.status !== 'active') {
+        //         clearTimeout(timeoutId);
+        //     }
+        //     // Wait a short period before checking the status again
+        //     await new Promise(resolve => setTimeout(resolve, 2000));
+        // } while (runStatus.status === 'active');
+        while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
+
+            // Wait for a couple of seconds before checking the status again
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            runStatus = await checkRunStatus(threadId, run.id);
+            // if (runStatus.status == "failed") {
+            //     console.log("[ ERROR ][ Assistants API ][ Run Status ] - Run status failed, reason: ", run);
+            //     return run.last_error;
+            // }
+        }
+
+        // If the assistant requires an action to be performed, handle it
+        if (runStatus.status === "requires_action") {
+            console.log("[ Assistants API ][ Action Required ] - The assistant requires an action to be performed");
+            // Call handleRequiredAction with necessary parameters. NOTE: Also passing in hard-coded id instead of assistant.id
+            return await handleRequiredAction(runStatus.required_action, assistant_id, run.id, threadId);
+        }
+
+        // If no action is required and the run is completed, get the assistant's messages
+        if (runStatus.status === "completed") {
+            const assistantMessages = await getAssistantMessages(threadId);
+            //new code need to delete?
+            const lastMessageForRun = assistantMessages.data
+                .filter(
+                    (message) => message.run_id === run.id && message.role === "assistant"
+                )
+                .pop();
+            // End new code 
+
+            // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
+            assistantResponse.setTextResponse(lastMessageForRun.content[0].text.value);
+            return assistantResponse;
+            // return lastMessageForRun;
+            // return assistantMessages;
+        }
+    } catch (err) {
+        console.log("[ ERROR ][ Assistants API ][ Handling Message ] - Error handling message ", err);
+        // If the status is neither 'completed' nor 'requires_action', handle accordingly
+        // You may want to return an error or a message indicating the run is not finished
+        throw new AssistantResponseError(openaiErrorMessage);
     }
-
-    // If the assistant requires an action to be performed, handle it
-    if (runStatus.status === "requires_action") {
-        console.log("[ Assistants API ][ Action Required ] - The assistant requires an action to be performed");
-        // Call handleRequiredAction with necessary parameters. NOTE: Also passing in hard-coded id instead of assistant.id
-        return await handleRequiredAction(runStatus.required_action, assistant_id, run.id, threadId);
-    }
-
-    // If no action is required and the run is completed, get the assistant's messages
-    if (runStatus.status === "completed") {
-        const assistantMessages = await getAssistantMessages(threadId);
-        //new code need to delete?
-        const lastMessageForRun = assistantMessages.data
-            .filter(
-                (message) => message.run_id === run.id && message.role === "assistant"
-            )
-            .pop();
-        // End new code 
-
-        // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
-
-        const assistantResponse = new AssistantResponse();
-        assistantResponse.setTextResponse(lastMessageForRun.content[0].text.value);
-        return assistantResponse;
-        // return lastMessageForRun;
-        // return assistantMessages;
-    }
-
-    // If the status is neither 'completed' nor 'requires_action', handle accordingly
-    // You may want to return an error or a message indicating the run is not finished
-    throw new Error('Run did not complete or require action.');
 }
 
 
 
 async function handleRequiredAction(requiredAction, assistantId, runId, threadId) {
     console.log("[ Assistants API ][ Handling Action ] - A request to handle required action has been received");
-    const assistantResponse = new AssistantResponse();
+
+    try {
+        const assistantResponse = new AssistantResponse();
 
 
-    // Array to hold the promises for each function call that needs to be handled
-    const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-        console.log("TOOLCALL!!!: ", toolCall);
-        const tool_call_id = toolCall.tool_call_id;
-        console.log("TOOLCALLID: ", tool_call_id);
-        const functionName = toolCall.function.name;
-        const args = toolCall.function.arguments;
-        const argsObject = JSON.parse(args);
+        // Array to hold the promises for each function call that needs to be handled
+        const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+            console.log("TOOLCALL!!!: ", toolCall);
+            const tool_call_id = toolCall.tool_call_id;
+            console.log("TOOLCALLID: ", tool_call_id);
+            const functionName = toolCall.function.name;
+            const args = toolCall.function.arguments;
+            const argsObject = JSON.parse(args);
 
 
-        console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
+            console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
 
-        // Determine which function to call based on the required action
-        switch (functionName) {
-            case 'transcribeAudio':
-                console.log("ARGS OBJECT: ", argsObject);
-                const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl);
-                console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
-                assistantResponse.setTextResponse(transcriptionOutput);
-                return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({ type: 'text', data: { text: transcriptionOutput } }),
-                };
-            case 'generateImage':
-                const argsObject = JSON.parse(args);
-                console.log("Parsed ARGS: ", argsObject);
-                console.log("Parsed ARGS.textPrompt: ", argsObject.textPrompt);
+            // Determine which function to call based on the required action
+            switch (functionName) {
+                case 'transcribeAudio':
+                    console.log("ARGS OBJECT: ", argsObject);
+                    const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl);
+                    console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
+                    assistantResponse.setTextResponse(transcriptionOutput);
+                    return {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify({ type: 'text', data: { text: transcriptionOutput } }),
+                    };
+                case 'generateImage':
+                    const argsObject = JSON.parse(args);
+                    console.log("Parsed ARGS: ", argsObject);
+                    console.log("Parsed ARGS.textPrompt: ", argsObject.textPrompt);
 
-                const imageOutput = await generateImage(argsObject.textPrompt, argsObject.isHd);
-                console.log("Image output inside switch: ", imageOutput);
-                assistantResponse.setImageResponse(imageOutput.data[0].url);
+                    const imageOutput = await generateImage(argsObject.textPrompt, argsObject.isHd);
+                    console.log("Image output inside switch: ", imageOutput);
+                    assistantResponse.setImageResponse(imageOutput.data[0].url);
 
-                // return {
-                //     tool_call_id: toolCall.id,
-                //     output: { type: 'image', data: { image_url: imageOutput } },
-                // };
-                return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({ type: 'image', data: { image_url: imageOutput } }), // Serialize the output to a JSON string
-                };
-            case 'visionApi':
-                const argsObjectJson = JSON.parse(args);
+                    // return {
+                    //     tool_call_id: toolCall.id,
+                    //     output: { type: 'image', data: { image_url: imageOutput } },
+                    // };
+                    return {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify({ type: 'image', data: { image_url: imageOutput } }), // Serialize the output to a JSON string
+                    };
+                case 'visionApi':
+                    const argsObjectJson = JSON.parse(args);
 
-                const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt, argsObjectJson.mediaType);
-                console.log(`VISION OUTPUT: ${visionOutput}`);
-                assistantResponse.setTextResponse(visionOutput);
+                    const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt, argsObjectJson.mediaType);
+                    console.log(`VISION OUTPUT: ${visionOutput}`);
+                    assistantResponse.setTextResponse(visionOutput);
 
-                return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({ type: 'text', data: { text: visionOutput } }),
-                };
-            default:
-                throw new Error(`Unknown function requested: ${functionName}`);
-        }
-    });
+                    return {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify({ type: 'text', data: { text: visionOutput } }),
+                    };
+                default:
+                    throw new Error(`Unknown function requested: ${functionName}`);
+            }
+        });
 
-    // Wait for all tool calls to be processed
-    const toolOutputs = await Promise.all(toolOutputsPromises);
+        // Wait for all tool calls to be processed
+        const toolOutputs = await Promise.all(toolOutputsPromises);
 
-    // Submit the results of the tool calls back to the assistant
-    // const run = await openai.beta.threads.runs.submitToolOutputs(
-    //     assistant_id: assistantId,
-    //     run_id: runId,
-    //     tool_outputs: toolOutputs,
-    // );
+        // Submit the results of the tool calls back to the assistant
+        // const run = await openai.beta.threads.runs.submitToolOutputs(
+        //     assistant_id: assistantId,
+        //     run_id: runId,
+        //     tool_outputs: toolOutputs,
+        // );
 
-    console.log("TOOL OUTPUTS: ", toolOutputs);
-    console.log("TOOL OUTPUTS DATA: ", toolOutputs.output);
+        console.log("TOOL OUTPUTS: ", toolOutputs);
+        console.log("TOOL OUTPUTS DATA: ", toolOutputs.output);
 
-    const run = await openai.beta.threads.runs.submitToolOutputs(
-        threadId,
-        runId,
-        {
-            tool_outputs: toolOutputs,
-        }
-    );
+        const run = await openai.beta.threads.runs.submitToolOutputs(
+            threadId,
+            runId,
+            {
+                tool_outputs: toolOutputs,
+            }
+        );
 
-    console.log("[ Assistants API ][ Required Action Handling ] - Successfully submitted tool outputs");
-    // After submitting tool outputs, get the updated assistant's messages
-    const assistantMessages = await getAssistantMessages(threadId);
+        console.log("[ Assistants API ][ Required Action Handling ] - Successfully submitted tool outputs");
+        // After submitting tool outputs, get the updated assistant's messages
+        const assistantMessages = await getAssistantMessages(threadId);
 
-    //     let assistantMessages;
-    // let found = false;
-    // const maxAttempts = 10;
-    // let attempts = 0;
+        //     let assistantMessages;
+        // let found = false;
+        // const maxAttempts = 10;
+        // let attempts = 0;
 
-    // while (!found && attempts < maxAttempts) {
-    //   attempts++;
-    //   assistantMessages = await getAssistantMessages(threadId);
-    //   found = assistantMessages.data.some(message => message.run_id === runId && message.role === "assistant");
-    //   console.log("FOUND!!!: ", found);
-    //   if (!found) {
-    //     console.log("NOT FOUND YET, RETRYING");
-    //     await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1 second before the next attempt
-    //   }
-    // }
+        // while (!found && attempts < maxAttempts) {
+        //   attempts++;
+        //   assistantMessages = await getAssistantMessages(threadId);
+        //   found = assistantMessages.data.some(message => message.run_id === runId && message.role === "assistant");
+        //   console.log("FOUND!!!: ", found);
+        //   if (!found) {
+        //     console.log("NOT FOUND YET, RETRYING");
+        //     await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1 second before the next attempt
+        //   }
+        // }
 
-    // if (!found) {
-    //   throw new Error('Response message not found after maximum attempts.');
-    // }
+        // if (!found) {
+        //   throw new Error('Response message not found after maximum attempts.');
+        // }
 
-    console.log("run id passed: ", runId);
-    console.log("run id from run: ", run.id);
+        // console.log("run id passed: ", runId);
+        // console.log("run id from run: ", run.id);
 
-    for (const messages of assistantMessages.data) {
-        console.log("individual message: ", messages.content[0].text);
-        console.log("individual message: ", messages.content[0].text.value);
+        // for (const messages of assistantMessages.data) {
+        //     console.log("individual message: ", messages.content[0].text);
+        //     console.log("individual message: ", messages.content[0].text.value);
+
+        // }
+
+        // const lastMessageForRun = assistantMessages.data
+        //     // .filter(
+        //     //     (message) => message.run_id === run.id && message.role === "assistant"
+        //     // )
+        //     .filter(
+        //         (message) => message.role === "assistant"
+        //     )
+        //     .pop();
+
+
+        // console.log("lastMessageForRun: ", lastMessageForRun);
+
+        // console.log("lastMessageForRun: ", lastMessageForRun.content[0].text);
+
+        // const toolOutput = toolOutputs[0].output;
+
+        // // Parse the JSON string to an object.
+        // const parsedOutput = JSON.parse(toolOutput);
+        // console.log("PARSED OUTPUT: ", parsedOutput.data.image_url.data);
+
+        // // Access the URL field from the parsed JSON object.
+        // const imageUrl = parsedOutput.data.image_url.data[0].url;
+
+        // console.log("Image URL: ", imageUrl);
+
+        return assistantResponse;
+    } catch (err) {
+        console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
+
+        throw new AssistantResponseError(openaiErrorMessage);
 
     }
-
-    const lastMessageForRun = assistantMessages.data
-        // .filter(
-        //     (message) => message.run_id === run.id && message.role === "assistant"
-        // )
-        .filter(
-            (message) => message.role === "assistant"
-        )
-        .pop();
-
-
-    console.log("lastMessageForRun: ", lastMessageForRun);
-
-    // console.log("lastMessageForRun: ", lastMessageForRun.content[0].text);
-
-    // const toolOutput = toolOutputs[0].output;
-
-    // // Parse the JSON string to an object.
-    // const parsedOutput = JSON.parse(toolOutput);
-    // console.log("PARSED OUTPUT: ", parsedOutput.data.image_url.data);
-
-    // // Access the URL field from the parsed JSON object.
-    // const imageUrl = parsedOutput.data.image_url.data[0].url;
-
-    // console.log("Image URL: ", imageUrl);
-
-    return assistantResponse;
     // return imageUrl;
 }
 
@@ -1475,6 +1522,14 @@ class AssistantResponse {
 
     setError(error) {
         this.error = error;
+    }
+}
+
+class AssistantResponseError extends Error {
+    constructor(message, assistantResponse = null) {
+        super(message);
+        this.name = `AssistantResponseError`;
+        this.assistantResponse = assistantResponse;
     }
 }
 

@@ -39,3 +39,10 @@ Es como tener a un superhéroe en tu bolsillo - siempre listo para la acción. P
     `¡Hey {profile}! Has ingresado oficialmente a la Luna-verse...`,
     `¡Saludos {profile}! Acabas de entrar a la Zona Luna...`,
 ];
+
+export const openaiErrorMessage = `🚫 Oops! It seems there's a hiccup with the OpenAI GPT service right now. Luna is all good, but we rely on that service to handle some tasks. Please give it a moment and try again later. We apologize for any inconvenience and appreciate your patience!`;
+
+
+// export const errorMessage = `🚫 Oops! It seems there's a hiccup with the service right now. It could be Luna or the OpenAI GPT, we're looking into it. Please give it a moment and try again later. We apologize for any inconvenience and appreciate your patience!`;
+
+export const errorMessage = `🚫 Oops! It seems like Luna, OpenAI, or one of their digital buddies is throwing a glitch party. Please give it a moment and try again later while we're sorting it out! 🤖 🎉`;
