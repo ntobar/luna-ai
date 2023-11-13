@@ -56,6 +56,13 @@ module.exports = async (req, res) => {
         let fromNumber = req.body.From;
         const profileName = req.body.ProfileName;
 
+        console.table({
+            'User: ': profileName,
+            'Incoming Message ': incomingMessage,
+            'Incoming Media ': true,
+            'Incoming Media Type ': incomingMediaContentType,
+        })
+
 
         // DELETE!!!
         // incomingMessage = "cual es el boxeador mas famoso del mundo?";
@@ -66,13 +73,13 @@ module.exports = async (req, res) => {
         // incomingMediaUrl = "https://eu-central.storage.cloudconvert.com/tasks/dd2d63fb-61f4-4fe0-a540-895e61ba6ccd/file.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20231109%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20231109T225648Z&X-Amz-Expires=86400&X-Amz-Signature=44be6dd39bd28a6fab7d26da71d36401a13b6826427ec08031dbe779b75b11d3&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22file.mp3%22&response-content-type=audio%2Fmpeg&x-id=GetObject";
         // incomingMediaUrl = "https://api.twilio.com/2010-04-01/Accounts/AC6d3289354e8e27b6711e450b3e055d40/Messages/MMb2cf1f65ac49fdc87927858ca2aa3693/Media/ME2b93af76c6acf39c810074f7a90056be";
 
-        incomingMediaUrl = " https://api.twilio.com/2010-04-01/Accounts/AC6d3289354e8e27b6711e450b3e055d40/Messages/MMd5687b2d0544da6cdd01144c5ccf13a1/Media/MEe8af16ec017ed21775d1069dc32c8bf9";
+        // incomingMediaUrl = " https://api.twilio.com/2010-04-01/Accounts/AC6d3289354e8e27b6711e450b3e055d40/Messages/MMd5687b2d0544da6cdd01144c5ccf13a1/Media/MEe8af16ec017ed21775d1069dc32c8bf9";
         // incomingMessage = "What is this picture?"
-        fromNumber = 'whatsapp:+18572009432'
+        // fromNumber = 'whatsapp:+18572009432'
 
         // Database handling
-        // const whatsappNumber = fromNumber.replace('whatsapp:', '');
-        const whatsappNumber = '+18572009432';
+        const whatsappNumber = fromNumber.replace('whatsapp:', '');
+        // const whatsappNumber = '+18572009432';
 
 
         // Check if the user exists
@@ -117,14 +124,14 @@ module.exports = async (req, res) => {
             }
         }
 
-        if (incomingMediaContentType == "audio/ogg") {
+        // if (incomingMediaContentType == "audio/ogg") {
 
-            // incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
+        //     // incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
 
-        }
+        // }
 
         // incomingMediaContentType = "image/jpeg";
-        incomingMediaContentType = "audio/ogg";
+        // incomingMediaContentType = "audio/ogg";
 
 
         let messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
