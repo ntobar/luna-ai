@@ -1506,7 +1506,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
             const firstToolCall = requiredAction.submit_tool_outputs.tool_calls[0];
             console.log("FIRST TOOL CALL: ", firstToolCall);
 
-            const tool_call_id = firstToolCall.tool_call_id;
+            const tool_call_id = firstToolCall.id;
             const functionName = firstToolCall.function.name;
             const args = firstToolCall.function.arguments;
             const argsObject = JSON.parse(args);
