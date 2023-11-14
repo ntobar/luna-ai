@@ -17,6 +17,7 @@ import { json } from 'body-parser';
 import { englishWelcomeMessage, spanishWelcomeMessage, openaiErrorMessage, errorMessage } from './constants';
 import { GPTTokens } from 'gpt-tokens';
 import { assert } from 'console';
+import { ConversationContextImpl } from 'twilio/lib/rest/conversations/v1/conversation';
 // import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer/esm/model/gpt-4';
 // const { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } = require('gpt-tokenizer/esm/model/gpt-4');
 // const { encode, decode } = require('gpt-3-encoder'); 
@@ -45,7 +46,7 @@ const openai = new OpenAI({
 module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
-        console.log("REQUEST: ", req);
+        // console.log("REQUEST: ", req);
         console.log("Received webhook Request, initializing... ");
         // testConnection();
 
@@ -57,9 +58,9 @@ module.exports = async (req, res) => {
         let fromNumber = req.body.From;
         const profileName = req.body.ProfileName;
 
-        if (!incomingMediaContentType) {
-            incomingMessage = null;
-        }
+        // if (!incomingMediaContentType) {
+        //     incomingMessage = null;
+        // }
 
         console.table({
             'User: ': profileName,
@@ -129,11 +130,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        if (incomingMediaContentType == "audio/ogg") {
+        // if (incomingMediaContentType == "audio/ogg") {
 
-            incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
+        //     incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
 
-        }
+        // }
 
         // incomingMediaContentType = "image/jpeg";
         // incomingMediaContentType = "audio/ogg";
@@ -987,26 +988,25 @@ async function transcribeAudio(incomingMediaUrl, mediaType) {
 
 }
 
-
 async function setupAssistant() {
     console.log(`[ Assistants API ][ Assistant Setup ] - Setting up new assistant...`);
     try {
         const assistant = await openai.beta.assistants.create({
             // model: "gpt-4-1106-preview", // Replace with the correct model you are using
             model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
-            instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required",
+            instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
             tools: [
                 {
                     type: "function",
                     function: {
                         name: "transcribeAudio",
-                        description: "Transcribe an audio from a given URL. The media url sent will be a url from cloud convert.",
+                        description: "Transcribe an audio from a given URL. The media url sent will be a url from twilio.",
                         parameters: {
                             type: "object",
                             properties: {
                                 // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
-                                incomingMediaUrl: { type: "string", description: "The cloud convert audio file Media url to transcribe, its required. The incomingMediaUrl will be from cloud convert, and you should treat is as an audio file" },
-                                mediaType: { type: "string", description: "The media type for the cloud convert url audio. It will be audio/ogg" }
+                                incomingMediaUrl: { type: "string", description: "The twilio audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" },
+                                mediaType: { type: "string", description: "The media type for the twilio url audio. It will be audio/ogg" }
 
                             },
                             required: ["incomingMediaUrl", "mediaType"]
@@ -1023,7 +1023,7 @@ async function setupAssistant() {
                         parameters: {
                             type: "object",
                             properties: {
-                                textPrompt: { type: "string", description: "The prompt for the image" },
+                                textPrompt: { type: "string", description: "The prompt for the image to be generated. This function should NOT be called if a media url is provided" },
                                 isHd: { type: "boolean", description: "Whether to generate the image in HD" }
                             },
                             required: ["textPrompt"]
@@ -1058,6 +1058,102 @@ async function setupAssistant() {
         console.log(`[ ERROR ][ Assistants API ][ Assistant Setup ] - Error setting up new assistant. Error: ${err}`);
         throw new AssistantResponseError(openaiErrorMessage);
     }
+}
+
+async function setupSpecializedAssistant(mediaContentType) {
+    try {
+    let assistant;
+    if (mediaContentType) {
+        if (mediaContentType == "image/jpeg") {
+            console.log(`[ Assistants API ][ Setup Assistant ] - Image Media url found, creating assistant for image/jpeg`);
+
+            assistant = await openai.beta.assistants.create({
+                // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+                model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+                instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
+                tools: [
+                    {
+                        type: "function",
+                        function: {
+                            name: "visionApi",
+                            description: "Call the visionApi function to respond to the user when they send a twilio media url and a text prompt.",
+                            parameters: {
+                                type: "object",
+                                properties: {
+                                    mediaUrl: { type: "string", description: "The api.twilio.com Media URL of the image, and its required. The mediaUrl will be from api.twilio.com, and you should treat is as a jpeg image." },
+                                    prompt: { type: "string", description: "The prompt for the vision API, and its required" },
+                                    mediaType: { type: "string", description: "The media type for the Twilio media url picture" }
+                                },
+                                required: ["mediaUrl", "prompt", "mediaType"]
+                            }
+                        }
+                    }
+                ]
+            });
+        } else {
+            console.log(`[ Assistants API ][ Setup Assistant ] - Image Media url found, creating assistant for audio/ogg`);
+
+            assistant = await openai.beta.assistants.create({
+                // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+                model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+                instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
+                tools: [
+                    {
+                        type: "function",
+                        function: {
+                            name: "transcribeAudio",
+                            description: "Transcribe an audio from a given URL. The media url sent will be a url from twilio.",
+                            parameters: {
+                                type: "object",
+                                properties: {
+                                    // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
+                                    incomingMediaUrl: { type: "string", description: "The twilio audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" },
+                                    mediaType: { type: "string", description: "The media type for the twilio url audio. It will be audio/ogg" }
+    
+                                },
+                                required: ["incomingMediaUrl", "mediaType"]
+    
+                                // required: ["mediaUrl", "tempFilePath"]
+                            }
+                        }
+                    }
+                ]
+            });
+        }
+    } else {
+
+        assistant = await openai.beta.assistants.create({
+            // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+            model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+            instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
+            tools: [
+                {
+                    type: "function",
+                    function: {
+                        name: "generateImage",
+                        description: "Generate an image based on a prompt",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                textPrompt: { type: "string", description: "The prompt for the image to be generated. This function should NOT be called if a media url is provided" },
+                                isHd: { type: "boolean", description: "Whether to generate the image in HD" }
+                            },
+                            required: ["textPrompt"]
+                        }
+                    }
+                }
+            ]
+        });
+        
+    }
+
+    console.log(`[ Assistants API ][ Setup Specialized Assistant ] - Successfully created new Assistant with id: ${assistant.id}`);
+    return assistant;
+} catch(err) {
+    console.log(`[ ERROR ][ Assistants API ][ Setup Specialized Assistant ] - Failed to create new Assistant, error: ${err}}`);
+    throw new AssistantResponseError(openaiErrorMessage);
+}
+
 }
 
 async function getOrCreateThread(userId) {
@@ -1157,7 +1253,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
 
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
-                    instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis.`
+                    instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis and this run should only take care of the audio, not any images.`
 
 
                 });
@@ -1276,16 +1372,37 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
     }
     const assistantResponse = new AssistantResponse();
 
+    let visionApiAssistantId = 'asst_MR5MRKAJ5rc0qhaAsKi7WW6C';
+    let transcribeAudioAssistantId = 'asst_b6asV1Td64nD71BGbEUeeb7l';
+    let generateImageAndTextAssistantId = 'asst_neb0B4Ad0Exg3lzAB42egnhu';
+
     try {
         // Set up the Assistant
-        let assistant = await setupAssistant();
+        // let assistant = await setupAssistant();
+
+        // let assistant = await setupSpecializedAssistant(mediaType);
         // if(!assistant) {
         //     console.log("[ Assistants API ][ Assitant ] - Creating a new assistant");
 
         //     assistant = await setupAssistant();
         // }
 
-        let assistant_id = assistant.id;
+        // let assistant_id = 'asst_Lbe2bp6HuYz8QErB4rogMeJj';
+        let assistant_id;
+
+        if(mediaType) {
+        if (mediaType == "image/jpeg") {
+            assistant_id = visionApiAssistantId;
+        } else {
+            assistant_id = transcribeAudioAssistantId;
+
+        }
+    } else {
+        assistant_id = generateImageAndTextAssistantId;
+    }
+        // let assistant_id = 'asst_Br2fpSsagEd3LcYCP9fp2RQy';
+
+
         // Hard-coded assistant so we dont create a new one for each request
         // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
 
