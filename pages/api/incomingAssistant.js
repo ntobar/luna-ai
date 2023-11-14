@@ -1495,159 +1495,222 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
     }
 }
 
-
-
 async function handleRequiredAction(requiredAction, assistantId, runId, threadId) {
     console.log("[ Assistants API ][ Handling Action ] - A request to handle required action has been received");
 
     try {
         const assistantResponse = new AssistantResponse();
 
+        // Check if there are any tool calls and process only the first one
+        if (requiredAction.submit_tool_outputs.tool_calls.length > 0) {
+            const firstToolCall = requiredAction.submit_tool_outputs.tool_calls[0];
+            console.log("FIRST TOOL CALL: ", firstToolCall);
 
-        // Array to hold the promises for each function call that needs to be handled
-        const toolOutputsPromises = await requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-            console.log("TOOLCALL!!!: ", toolCall);
-            const tool_call_id = toolCall.tool_call_id;
-            console.log("TOOLCALLID: ", tool_call_id);
-            const functionName = toolCall.function.name;
-            const args = toolCall.function.arguments;
+            const tool_call_id = firstToolCall.tool_call_id;
+            const functionName = firstToolCall.function.name;
+            const args = firstToolCall.function.arguments;
             const argsObject = JSON.parse(args);
-
 
             console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
 
+            let output;
             // Determine which function to call based on the required action
             switch (functionName) {
                 case 'transcribeAudio':
-                    console.log("ARGS OBJECT: ", argsObject);
                     const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl, argsObject.mediaType);
-                    console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
                     assistantResponse.setTextResponse(transcriptionOutput);
-                    return {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify({ type: 'text', data: { text: transcriptionOutput } }),
-                    };
+                    output = JSON.stringify({ type: 'text', data: { text: transcriptionOutput } });
+                    break;
                 case 'generateImage':
-                    const argsObject = JSON.parse(args);
-                    console.log("Parsed ARGS: ", argsObject);
-                    console.log("Parsed ARGS.textPrompt: ", argsObject.textPrompt);
-
                     const imageOutput = await generateImage(argsObject.textPrompt, argsObject.isHd);
-                    console.log("Image output inside switch: ", imageOutput);
                     assistantResponse.setImageResponse(imageOutput.data[0].url);
-
-                    // return {
-                    //     tool_call_id: toolCall.id,
-                    //     output: { type: 'image', data: { image_url: imageOutput } },
-                    // };
-                    return {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify({ type: 'image', data: { image_url: imageOutput } }), // Serialize the output to a JSON string
-                    };
+                    output = JSON.stringify({ type: 'image', data: { image_url: imageOutput } });
+                    break;
                 case 'visionApi':
-                    const argsObjectJson = JSON.parse(args);
-
-                    const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt, argsObjectJson.mediaType);
-                    console.log(`VISION OUTPUT: ${visionOutput}`);
+                    const visionOutput = await visionApi(argsObject.mediaUrl, argsObject.prompt, argsObject.mediaType);
                     assistantResponse.setTextResponse(visionOutput);
-
-                    return {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify({ type: 'text', data: { text: visionOutput } }),
-                    };
+                    output = JSON.stringify({ type: 'text', data: { text: visionOutput } });
+                    break;
                 default:
                     throw new Error(`Unknown function requested: ${functionName}`);
             }
-        });
 
-        // Wait for all tool calls to be processed
-        const toolOutputs = await Promise.all(toolOutputsPromises);
+            // Submit the result of the tool call back to the assistant
+            await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
+                tool_outputs: [{
+                    tool_call_id: tool_call_id,
+                    output: output,
+                }],
+            });
 
-        // Submit the results of the tool calls back to the assistant
-        // const run = await openai.beta.threads.runs.submitToolOutputs(
-        //     assistant_id: assistantId,
-        //     run_id: runId,
-        //     tool_outputs: toolOutputs,
-        // );
+        } else {
+            console.log("[ Assistants API ][ Handling Action ] - No tool calls to process.");
+        }
 
-        console.log("TOOL OUTPUTS: ", toolOutputs);
-        console.log("TOOL OUTPUTS DATA: ", toolOutputs.output);
-
-        const run = await openai.beta.threads.runs.submitToolOutputs(
-            threadId,
-            runId,
-            {
-                tool_outputs: toolOutputs,
-            }
-        );
-
-        console.log("[ Assistants API ][ Required Action Handling ] - Successfully submitted tool outputs");
-        // After submitting tool outputs, get the updated assistant's messages
-        const assistantMessages = await getAssistantMessages(threadId);
-
-        //     let assistantMessages;
-        // let found = false;
-        // const maxAttempts = 10;
-        // let attempts = 0;
-
-        // while (!found && attempts < maxAttempts) {
-        //   attempts++;
-        //   assistantMessages = await getAssistantMessages(threadId);
-        //   found = assistantMessages.data.some(message => message.run_id === runId && message.role === "assistant");
-        //   console.log("FOUND!!!: ", found);
-        //   if (!found) {
-        //     console.log("NOT FOUND YET, RETRYING");
-        //     await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1 second before the next attempt
-        //   }
-        // }
-
-        // if (!found) {
-        //   throw new Error('Response message not found after maximum attempts.');
-        // }
-
-        // console.log("run id passed: ", runId);
-        // console.log("run id from run: ", run.id);
-
-        // for (const messages of assistantMessages.data) {
-        //     console.log("individual message: ", messages.content[0].text);
-        //     console.log("individual message: ", messages.content[0].text.value);
-
-        // }
-
-        // const lastMessageForRun = assistantMessages.data
-        //     // .filter(
-        //     //     (message) => message.run_id === run.id && message.role === "assistant"
-        //     // )
-        //     .filter(
-        //         (message) => message.role === "assistant"
-        //     )
-        //     .pop();
-
-
-        // console.log("lastMessageForRun: ", lastMessageForRun);
-
-        // console.log("lastMessageForRun: ", lastMessageForRun.content[0].text);
-
-        // const toolOutput = toolOutputs[0].output;
-
-        // // Parse the JSON string to an object.
-        // const parsedOutput = JSON.parse(toolOutput);
-        // console.log("PARSED OUTPUT: ", parsedOutput.data.image_url.data);
-
-        // // Access the URL field from the parsed JSON object.
-        // const imageUrl = parsedOutput.data.image_url.data[0].url;
-
-        // console.log("Image URL: ", imageUrl);
-
+        console.log("[ Assistants API ][ Required Action Handling ] - Successfully handled required action");
         return assistantResponse;
     } catch (err) {
         console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
-
         throw new AssistantResponseError(openaiErrorMessage);
-
     }
-    // return imageUrl;
 }
+
+
+
+
+// async function handleRequiredAction(requiredAction, assistantId, runId, threadId) {
+//     console.log("[ Assistants API ][ Handling Action ] - A request to handle required action has been received");
+
+//     try {
+//         const assistantResponse = new AssistantResponse();
+
+
+//         // Array to hold the promises for each function call that needs to be handled
+//         // const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+//             const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+
+//             console.log("TOOLCALL!!!: ", toolCall);
+//             const tool_call_id = toolCall.tool_call_id;
+//             console.log("TOOLCALLID: ", tool_call_id);
+//             const functionName = toolCall.function.name;
+//             const args = toolCall.function.arguments;
+//             const argsObject = JSON.parse(args);
+
+
+//             console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
+
+//             // Determine which function to call based on the required action
+//             switch (functionName) {
+//                 case 'transcribeAudio':
+//                     console.log("ARGS OBJECT: ", argsObject);
+//                     const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl, argsObject.mediaType);
+//                     console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
+//                     assistantResponse.setTextResponse(transcriptionOutput);
+//                     return {
+//                         tool_call_id: toolCall.id,
+//                         output: JSON.stringify({ type: 'text', data: { text: transcriptionOutput } }),
+//                     };
+//                 case 'generateImage':
+//                     const argsObject = JSON.parse(args);
+//                     console.log("Parsed ARGS: ", argsObject);
+//                     console.log("Parsed ARGS.textPrompt: ", argsObject.textPrompt);
+
+//                     const imageOutput = await generateImage(argsObject.textPrompt, argsObject.isHd);
+//                     console.log("Image output inside switch: ", imageOutput);
+//                     assistantResponse.setImageResponse(imageOutput.data[0].url);
+
+//                     // return {
+//                     //     tool_call_id: toolCall.id,
+//                     //     output: { type: 'image', data: { image_url: imageOutput } },
+//                     // };
+//                     return {
+//                         tool_call_id: toolCall.id,
+//                         output: JSON.stringify({ type: 'image', data: { image_url: imageOutput } }), // Serialize the output to a JSON string
+//                     };
+//                 case 'visionApi':
+//                     const argsObjectJson = JSON.parse(args);
+
+//                     const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt, argsObjectJson.mediaType);
+//                     console.log(`VISION OUTPUT: ${visionOutput}`);
+//                     assistantResponse.setTextResponse(visionOutput);
+
+//                     return {
+//                         tool_call_id: toolCall.id,
+//                         output: JSON.stringify({ type: 'text', data: { text: visionOutput } }),
+//                     };
+//                 default:
+//                     throw new Error(`Unknown function requested: ${functionName}`);
+//             }
+//         });
+
+//         // Wait for all tool calls to be processed
+//         const toolOutputs = await Promise.all(toolOutputsPromises);
+
+//         // Submit the results of the tool calls back to the assistant
+//         // const run = await openai.beta.threads.runs.submitToolOutputs(
+//         //     assistant_id: assistantId,
+//         //     run_id: runId,
+//         //     tool_outputs: toolOutputs,
+//         // );
+
+//         console.log("TOOL OUTPUTS: ", toolOutputs);
+//         console.log("TOOL OUTPUTS DATA: ", toolOutputs.output);
+
+//         const run = await openai.beta.threads.runs.submitToolOutputs(
+//             threadId,
+//             runId,
+//             {
+//                 tool_outputs: toolOutputs,
+//             }
+//         );
+
+//         console.log("[ Assistants API ][ Required Action Handling ] - Successfully submitted tool outputs");
+//         // After submitting tool outputs, get the updated assistant's messages
+//         const assistantMessages = await getAssistantMessages(threadId);
+
+//         //     let assistantMessages;
+//         // let found = false;
+//         // const maxAttempts = 10;
+//         // let attempts = 0;
+
+//         // while (!found && attempts < maxAttempts) {
+//         //   attempts++;
+//         //   assistantMessages = await getAssistantMessages(threadId);
+//         //   found = assistantMessages.data.some(message => message.run_id === runId && message.role === "assistant");
+//         //   console.log("FOUND!!!: ", found);
+//         //   if (!found) {
+//         //     console.log("NOT FOUND YET, RETRYING");
+//         //     await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1 second before the next attempt
+//         //   }
+//         // }
+
+//         // if (!found) {
+//         //   throw new Error('Response message not found after maximum attempts.');
+//         // }
+
+//         // console.log("run id passed: ", runId);
+//         // console.log("run id from run: ", run.id);
+
+//         // for (const messages of assistantMessages.data) {
+//         //     console.log("individual message: ", messages.content[0].text);
+//         //     console.log("individual message: ", messages.content[0].text.value);
+
+//         // }
+
+//         // const lastMessageForRun = assistantMessages.data
+//         //     // .filter(
+//         //     //     (message) => message.run_id === run.id && message.role === "assistant"
+//         //     // )
+//         //     .filter(
+//         //         (message) => message.role === "assistant"
+//         //     )
+//         //     .pop();
+
+
+//         // console.log("lastMessageForRun: ", lastMessageForRun);
+
+//         // console.log("lastMessageForRun: ", lastMessageForRun.content[0].text);
+
+//         // const toolOutput = toolOutputs[0].output;
+
+//         // // Parse the JSON string to an object.
+//         // const parsedOutput = JSON.parse(toolOutput);
+//         // console.log("PARSED OUTPUT: ", parsedOutput.data.image_url.data);
+
+//         // // Access the URL field from the parsed JSON object.
+//         // const imageUrl = parsedOutput.data.image_url.data[0].url;
+
+//         // console.log("Image URL: ", imageUrl);
+
+//         return assistantResponse;
+//     } catch (err) {
+//         console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
+
+//         throw new AssistantResponseError(openaiErrorMessage);
+
+//     }
+//     // return imageUrl;
+// }
 
 async function generatetoolCallsTranscription(mediaUrl) {
     const responseJson = []
