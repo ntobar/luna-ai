@@ -982,13 +982,13 @@ async function setupAssistant() {
                     type: "function",
                     function: {
                         name: "transcribeAudio",
-                        description: "Transcribe an audio from a given URL. The media url sent will be a twilio url in the form api.twilio.com.",
+                        description: "Transcribe an audio from a given URL. The media url sent will be a url from cloud convert.",
                         parameters: {
                             type: "object",
                             properties: {
                                 // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
-                                incomingMediaUrl: { type: "string", description: "The api.twilio.com audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" },
-                                mediaType: { type: "string", description: "The media type for the Twilio media url audio. It will be audio/ogg" }
+                                incomingMediaUrl: { type: "string", description: "The cloud convert audio file Media url to transcribe, its required. The incomingMediaUrl will be from cloud convert, and you should treat is as an audio file" },
+                                mediaType: { type: "string", description: "The media type for the cloud convert url audio. It will be audio/ogg" }
 
                             },
                             required: ["incomingMediaUrl", "mediaType"]
@@ -1139,7 +1139,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
 
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
-                    instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an audio for analysis.`
+                    instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis.`
 
 
                 });
