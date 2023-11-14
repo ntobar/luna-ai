@@ -1550,6 +1550,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
         console.log("[ Assistants API ][ Required Action Handling ] - Successfully handled required action");
         return assistantResponse;
     } catch (err) {
+        cancelRun(threadId, runId);
         console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
         throw new AssistantResponseError(openaiErrorMessage);
     }
@@ -1717,7 +1718,14 @@ async function generatetoolCallsTranscription(mediaUrl) {
 }
 
 async function cancelRun(threadId, runId) {
+    try {
+    await openai.beta.threads.runs.cancel(threadId, runId);
 
+    console.log(`[ Assistants API ][ Cancel Run ] - Successfully cancelled run ${runId} for thread ${threadId}, error: ${err}`);
+
+    }catch(err) {
+        console.log(`[ ERROR ][ Assistants API ][ Cancel Run ] - Error canceling run ${runId} for thread ${threadId}, error: ${err}`);
+    }
 }
 
 class AssistantResponse {
