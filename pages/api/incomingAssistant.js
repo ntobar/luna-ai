@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
         let fromNumber = req.body.From;
         const profileName = req.body.ProfileName;
 
-        if(!incomingMediaContentType) {
+        if (!incomingMediaContentType) {
             incomingMessage = null;
         }
 
@@ -142,316 +142,334 @@ module.exports = async (req, res) => {
 
         let messageResponse;
         try {
-        messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
-        } catch(err) {
-            await sendTwilioMessage(errorMessage, fromNumber)
+            messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
+        } catch (err) {
+            console.log(`[ ERROR ][ POST REQUEST ] - ERROR handling message, going to backup api`);
+            // await sendTwilioMessage(errorMessage, fromNumber)
         }
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
         console.log("MESSAGE RESPONSE: ", messageResponse);
 
 
-        if (messageResponse.type == "image") {
-            const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        if (messageResponse) {
+            if (messageResponse.type == "image") {
+                const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-            await client.messages
-                .create({
-                    mediaUrl: [`${messageResponse.content}`],
-                    from: 'whatsapp:+593994309557',
-                    // to: `whatsapp:${fromNumber}`
-                    to: fromNumber
+                await client.messages
+                    .create({
+                        mediaUrl: [`${messageResponse.content}`],
+                        from: 'whatsapp:+593994309557',
+                        // to: `whatsapp:${fromNumber}`
+                        to: fromNumber
 
-                })
-                .then(message => {
-                    console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
-                    // res.status(200).send({ sid: message.sid });  // send a response
-                })
-                .catch(err => {
-                    console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
-                    console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
+                    })
+                    .then(message => {
+                        console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
+                        // res.status(200).send({ sid: message.sid });  // send a response
+                    })
+                    .catch(err => {
+                        console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
+                        console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
 
-                    throw new Error(err.message);
-                    // res.status(500).send({ error: err.message });  // send a response
-                });
-        } else if (messageResponse.type == "text") {
-            const response = await sendResponse(messageResponse.content, fromNumber);
-            return response;
-        }
-
-        return;
-
-
-        // console.log("MESSAGE RESPONSE CONTENT: ", messageResponse.content[0]);
-
-        // // const imageUrl = lastMessageForRun.content
-        // console.log("MESSAGE RESPONSE CONTENT: ", messageResponse.content[0].text);
-
-        // const messages = messageResponse.data;
-        // // console.log("$$$MESSAGES: ", messages);
-        // let responseToUser = '';
-
-        // for (const message of messages) {
-        //     console.log("$$ MESSAGE CONTENT: ", message.content[0]);
-        // }
-        // // Find the assistant's response to the specific question
-        // for (const message of messages) {
-        //     if (message.role === 'assistant') {
-        //         // Assuming each message.content is an array with a single object containing the type and actual text
-        //         const assistantMessageContent = message.content[0]; // Access the first (or only) item in content
-        //         if (assistantMessageContent.type === 'text') {
-        //             responseToUser = assistantMessageContent.text.value; // Extract the text answer
-        //             break; // Assuming you only need the first assistant's message that answers the question
-        //         }
-        //     }
-        // }
-
-
-        // console.log(`##### RESPONSE TO USER: ${responseToUser}`);
-        // await sendResponse(responseToUser, fromNumber);
-
-
-        // const response = await sendResponse(messageResponse, fromNumber);
-        // return response;
-
-
-
-
-        console.log(`[ Incoming Request ] Received prompt: ${incomingMessage} from number ${fromNumber}`);
-
-
-        // Handle media
-        if (incomingMediaUrl) {
-
-            // Handle voice note
-            if (incomingMediaContentType == "audio/ogg") {
-                console.log(`[ Audio Transcription  ] - Request received for media with url ${incomingMediaUrl}`);
-
-                const transcription = await transcribeAudio(incomingMediaUrl);
-
-                await sendResponse(transcription, fromNumber);
-                console.log(`[ Audio Transcription ] - Response sent`);
-
-                // Handl image
-            } else if (incomingMediaContentType == "image/jpeg" && incomingMessage) {
-                console.log(`[ VISION API ] - Request received for media with url`);
-
-                const visionResponse = await visionApi(incomingMediaUrl, incomingMessage);
-                await sendResponse(visionResponse, fromNumber);
-                console.log(`[ VISION API ] - Response sent`);
-
+                        throw new Error(err.message);
+                        // res.status(500).send({ error: err.message });  // send a response
+                    });
+            } else if (messageResponse.type == "text") {
+                const response = await sendResponse(messageResponse.content, fromNumber);
+                return response;
             }
-
-
-        } else if (incomingMessage.toLowerCase().includes('image')) {
-
-            console.log(`[ Image Generation ] - Request received`);
-
-            // Set this to the maximum number of tokens you want the model to generate.
-            const maxTokens = 512;
-
-            const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-
-            console.log(`[ Image Generation ] - Sending request to OPENAI API`);
-
-            let imageResult;
-            if (incomingMessage.toLowerCase().includes('hd')) {
-
-                imageResult = await generateImage(incomingMessage, true);
-                // imageResult = await openai.createImage({
-                //     model: "dall-e-3",
-                //     prompt: incomingMessage,
-                //     size: "1024x1024",
-                //     quality: "hd"
-                // });
-            } else {
-
-
-                imageResult = await generateImage(incomingMessage, false);
-
-                // imageResult = await openai.createImage({
-                //     model: "dall-e-3",
-                //     prompt: incomingMessage,
-                //     size: "1024x1024",
-                // });
-            }
-
-            console.log(`[ Image Generation ] - OPENAI response received, image url: ${imageResult.data.data[0].url}`);
-            console.log(`[ Image Generation ] - Sending image to Twilio Client`);
-
-
-            // res.setHeader('Content-Type', 'image/png');
-            console.log("AFTER setting header for image content type **** ");
-            // Send the image URL back to the user
-            await client.messages
-                .create({
-                    mediaUrl: [`${imageResult.data.data[0].url}`],
-                    from: 'whatsapp:+593994309557',
-                    // to: `whatsapp:${fromNumber}`
-                    to: fromNumber
-
-                })
-                .then(message => {
-                    console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
-                    // res.status(200).send({ sid: message.sid });  // send a response
-                })
-                .catch(err => {
-                    console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
-                    console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
-
-                    throw new Error(err.message);
-                    // res.status(500).send({ error: err.message });  // send a response
-                });
-        } else if (incomingMessage.toLowerCase().includes('!reset')) {
-
-            console.log(`[ CHAT RESET ] User has requested chat reset`);
-
-            try {
-                const conversationId = await conversationRepository.getConversationId(existingUser.id);
-                await conversationRepository.deleteConversation(conversationId);
-            } catch (err) {
-                console.log(`[ ERROR ][ CHAT RESET ] Error Resetting Chat`);
-
-            }
-            res.status(204).end();
 
         } else {
-
-            const MAX_SUMMARIZATION_ITERATIONS = 5;
-            let summarizationCount = 0;
-
-            console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
-
-
-            let gpt3Response;
-            let messageId;
-            let conversationId;
-            let usageInfo;
-            let formattedHistory = [];
-
-            // If we want context, message doesnt have !notag
-            if (!incomingMessage.toLowerCase().includes('!notag')) {
-
-                // Get existing conversation or create a new one for the user
-                conversationId = await conversationRepository.getConversationId(existingUser.id);
-                if (!conversationId) {
-                    conversationId = await conversationRepository.createNewConversation(existingUser.id);
-                }
-
-                // Format user message for database
-                const userMessage = {
-                    userId: existingUser.id,
-                    conversationId: conversationId,
-                    role: 'user',
-                    content: incomingMessage,
-                    tokens: 0
-                }
-
-                // Store user message
-                messageId = await messageRepository.storeMessageInTable(userMessage);
-
-                // Fetch conversation history and format it
-                let conversationHistory = await messageRepository.getConversationHistory(conversationId);
-                formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
-
-                // console.log(`FORMATTED HISTORY: \n ${formattedHistory}`);
-                // console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
-
-                /**
-                 * Get PROMPT tokens (prompt + history)
-                 * Used to calculate if the context tokens has not exceeded the limit
-                 */
-                usageInfo = new GPTTokens({
-                    model: 'gpt-4',
-                    messages: formattedHistory
-                });
-
-                console.table({
-                    'Tokens prompt': usageInfo.promptUsedTokens,
-                    'Tokens completion': usageInfo.completionUsedTokens,
-                    'Tokens total': usageInfo.usedTokens,
-                })
-
-
-                console.log("TOTAL TOKEN COUNT LINE 194: ", usageInfo.usedTokens);
-                gpt3Response = await getGpt4Response(formattedHistory, true);
-            }
-
-
-            console.log("RESPONSE: ", JSON.stringify(gpt3Response));
-            let textResponse;
-            let promptTokens;
-            let completionTokens;
-            let totalTokens;
-            let error = false;
-
             try {
-                textResponse = gpt3Response.choices[0].message.content;
-                promptTokens = gpt3Response.usage?.prompt_tokens;
-                completionTokens = gpt3Response.usage?.completion_tokens;
-                totalTokens = gpt3Response.usage?.total_tokens;
-            } catch (err) {
-                error = true;
-                textResponse = gpt3Response
-            }
 
 
-            if (!error) {
-                console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
 
-                // We want to save messages if it doesnt include !notag
-                if (!incomingMessage.toLowerCase().includes('!notag')) {
-                    // if (messageId) {
-                    //   await messageRepository.updateMessageTokens(messageId, usageInfo.promptTokens);
-                    // }
-                    // Store messages in db
-                    const aiMessage = {
-                        userId: existingUser.id,
-                        conversationId: conversationId,
-                        role: 'assistant',
-                        content: textResponse,
-                        tokens: completionTokens
+                // return;
+
+
+                // console.log("MESSAGE RESPONSE CONTENT: ", messageResponse.content[0]);
+
+                // // const imageUrl = lastMessageForRun.content
+                // console.log("MESSAGE RESPONSE CONTENT: ", messageResponse.content[0].text);
+
+                // const messages = messageResponse.data;
+                // // console.log("$$$MESSAGES: ", messages);
+                // let responseToUser = '';
+
+                // for (const message of messages) {
+                //     console.log("$$ MESSAGE CONTENT: ", message.content[0]);
+                // }
+                // // Find the assistant's response to the specific question
+                // for (const message of messages) {
+                //     if (message.role === 'assistant') {
+                //         // Assuming each message.content is an array with a single object containing the type and actual text
+                //         const assistantMessageContent = message.content[0]; // Access the first (or only) item in content
+                //         if (assistantMessageContent.type === 'text') {
+                //             responseToUser = assistantMessageContent.text.value; // Extract the text answer
+                //             break; // Assuming you only need the first assistant's message that answers the question
+                //         }
+                //     }
+                // }
+
+
+                // console.log(`##### RESPONSE TO USER: ${responseToUser}`);
+                // await sendResponse(responseToUser, fromNumber);
+
+
+                // const response = await sendResponse(messageResponse, fromNumber);
+                // return response;
+
+
+
+
+                console.log(`[ Incoming Request ] Received prompt: ${incomingMessage} from number ${fromNumber}`);
+
+
+                // Handle media
+                if (incomingMediaUrl) {
+
+                    // Handle voice note
+                    if (incomingMediaContentType == "audio/ogg") {
+                        console.log(`[ Audio Transcription  ] - Request received for media with url ${incomingMediaUrl}`);
+
+                        const transcription = await transcribeAudio(incomingMediaUrl);
+
+                        await sendResponse(transcription, fromNumber);
+                        console.log(`[ Audio Transcription ] - Response sent`);
+
+                        // Handl image
+                    } else if (incomingMediaContentType == "image/jpeg" && incomingMessage) {
+                        console.log(`[ VISION API ] - Request received for media with url`);
+
+                        const visionResponse = await visionApi(incomingMediaUrl, incomingMessage);
+                        await sendResponse(visionResponse, fromNumber);
+                        console.log(`[ VISION API ] - Response sent`);
+
                     }
 
-                    formattedHistory.push({ role: 'assistant', content: textResponse });
+
+                } else if (incomingMessage.toLowerCase().includes('image')) {
+
+                    console.log(`[ Image Generation ] - Request received`);
+
+                    // Set this to the maximum number of tokens you want the model to generate.
+                    const maxTokens = 512;
+
+                    const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+                    console.log(`[ Image Generation ] - Sending request to OPENAI API`);
+
+                    let imageResult;
+                    if (incomingMessage.toLowerCase().includes('hd')) {
+
+                        imageResult = await generateImage(incomingMessage, true);
+                        // imageResult = await openai.createImage({
+                        //     model: "dall-e-3",
+                        //     prompt: incomingMessage,
+                        //     size: "1024x1024",
+                        //     quality: "hd"
+                        // });
+                    } else {
 
 
-                    usageInfo = new GPTTokens({
-                        model: 'gpt-4',
-                        messages: formattedHistory
-                    });
+                        imageResult = await generateImage(incomingMessage, false);
 
-                    console.table({
-                        'After Getting GPT response': true,
-                        'Tokens prompt': usageInfo.promptUsedTokens,
-                        'Tokens completion': usageInfo.completionUsedTokens,
-                        'Tokens total': usageInfo.usedTokens,
-                    })
+                        // imageResult = await openai.createImage({
+                        //     model: "dall-e-3",
+                        //     prompt: incomingMessage,
+                        //     size: "1024x1024",
+                        // });
+                    }
 
-
-                    await messageRepository.storeMessageInTable(aiMessage);
+                    console.log(`[ Image Generation ] - OPENAI response received, image url: ${imageResult.data.data[0].url}`);
+                    console.log(`[ Image Generation ] - Sending image to Twilio Client`);
 
 
-                    // After each interaction:
-                    // const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
-                    await conversationRepository.updateTokenCount(conversationId, usageInfo.usedTokens);
+                    // res.setHeader('Content-Type', 'image/png');
+                    console.log("AFTER setting header for image content type **** ");
+                    // Send the image URL back to the user
+                    await client.messages
+                        .create({
+                            mediaUrl: [`${imageResult.data.data[0].url}`],
+                            from: 'whatsapp:+593994309557',
+                            // to: `whatsapp:${fromNumber}`
+                            to: fromNumber
+
+                        })
+                        .then(message => {
+                            console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
+                            // res.status(200).send({ sid: message.sid });  // send a response
+                        })
+                        .catch(err => {
+                            console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
+                            console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
+
+                            throw new Error(err.message);
+                            // res.status(500).send({ error: err.message });  // send a response
+                        });
+                } else if (incomingMessage.toLowerCase().includes('!reset')) {
+
+                    console.log(`[ CHAT RESET ] User has requested chat reset`);
+
+                    try {
+                        const conversationId = await conversationRepository.getConversationId(existingUser.id);
+                        await conversationRepository.deleteConversation(conversationId);
+                    } catch (err) {
+                        console.log(`[ ERROR ][ CHAT RESET ] Error Resetting Chat`);
+
+                    }
+                    res.status(204).end();
+
+                } else {
+
+                    const MAX_SUMMARIZATION_ITERATIONS = 5;
+                    let summarizationCount = 0;
+
+                    console.log(`[ Chat Completion ] - Request received with prompt: ${incomingMessage}`);
+
+
+                    let gpt3Response;
+                    let messageId;
+                    let conversationId;
+                    let usageInfo;
+                    let formattedHistory = [];
+
+                    // If we want context, message doesnt have !notag
+                    if (!incomingMessage.toLowerCase().includes('!notag')) {
+
+                        // Get existing conversation or create a new one for the user
+                        conversationId = await conversationRepository.getConversationId(existingUser.id);
+                        if (!conversationId) {
+                            conversationId = await conversationRepository.createNewConversation(existingUser.id);
+                        }
+
+                        // Format user message for database
+                        const userMessage = {
+                            userId: existingUser.id,
+                            conversationId: conversationId,
+                            role: 'user',
+                            content: incomingMessage,
+                            tokens: 0
+                        }
+
+                        // Store user message
+                        messageId = await messageRepository.storeMessageInTable(userMessage);
+
+                        // Fetch conversation history and format it
+                        let conversationHistory = await messageRepository.getConversationHistory(conversationId);
+                        formattedHistory = conversationHistory.map(message => ({ role: message.role, content: message.content }));
+
+                        // console.log(`FORMATTED HISTORY: \n ${formattedHistory}`);
+                        // console.log(`FORMATTED HISTORY1: \n ${JSON.stringify(formattedHistory)}`);
+
+                        /**
+                         * Get PROMPT tokens (prompt + history)
+                         * Used to calculate if the context tokens has not exceeded the limit
+                         */
+                        usageInfo = new GPTTokens({
+                            model: 'gpt-4',
+                            messages: formattedHistory
+                        });
+
+                        console.table({
+                            'Tokens prompt': usageInfo.promptUsedTokens,
+                            'Tokens completion': usageInfo.completionUsedTokens,
+                            'Tokens total': usageInfo.usedTokens,
+                        })
+
+
+                        console.log("TOTAL TOKEN COUNT LINE 194: ", usageInfo.usedTokens);
+                        gpt3Response = await getGpt4Response(formattedHistory, true);
+                    }
+
+
+                    console.log("RESPONSE: ", JSON.stringify(gpt3Response));
+                    let textResponse;
+                    let promptTokens;
+                    let completionTokens;
+                    let totalTokens;
+                    let error = false;
+
+                    try {
+                        textResponse = gpt3Response.choices[0].message.content;
+                        promptTokens = gpt3Response.usage?.prompt_tokens;
+                        completionTokens = gpt3Response.usage?.completion_tokens;
+                        totalTokens = gpt3Response.usage?.total_tokens;
+                    } catch (err) {
+                        error = true;
+                        textResponse = gpt3Response
+                    }
+
+
+                    if (!error) {
+                        console.log(`[ Chat Completion ] - OPENAI response received with ${textResponse.length} characters and ${totalTokens} token usage: ${gpt3Response}`);
+
+                        // We want to save messages if it doesnt include !notag
+                        if (!incomingMessage.toLowerCase().includes('!notag')) {
+                            // if (messageId) {
+                            //   await messageRepository.updateMessageTokens(messageId, usageInfo.promptTokens);
+                            // }
+                            // Store messages in db
+                            const aiMessage = {
+                                userId: existingUser.id,
+                                conversationId: conversationId,
+                                role: 'assistant',
+                                content: textResponse,
+                                tokens: completionTokens
+                            }
+
+                            formattedHistory.push({ role: 'assistant', content: textResponse });
+
+
+                            usageInfo = new GPTTokens({
+                                model: 'gpt-4',
+                                messages: formattedHistory
+                            });
+
+                            console.table({
+                                'After Getting GPT response': true,
+                                'Tokens prompt': usageInfo.promptUsedTokens,
+                                'Tokens completion': usageInfo.completionUsedTokens,
+                                'Tokens total': usageInfo.usedTokens,
+                            })
+
+
+                            await messageRepository.storeMessageInTable(aiMessage);
+
+
+                            // After each interaction:
+                            // const conversationTokenCount = await messageRepository.getTotalTokenCount(conversationId);
+                            await conversationRepository.updateTokenCount(conversationId, usageInfo.usedTokens);
+                        }
+                        // res.setHeader('Content-Type', 'text/xml');
+                        // if (gpt3Response.length < 1500) {
+                        //   // Send a response back to Twilio
+                        //   console.log(`[ Chat Completion ] - Message length has less than 1500 characters, sending response`)
+                        //   res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
+                        // } else {
+
+                        console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
+                        // res.status(204).end();
+                        // res.send(`<Response><Message>${welcomeText}</Message></Response>`);
+
+                    }
+                    await sendResponse(textResponse, fromNumber);
+
+                    // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
+                    //}
                 }
-                // res.setHeader('Content-Type', 'text/xml');
-                // if (gpt3Response.length < 1500) {
-                //   // Send a response back to Twilio
-                //   console.log(`[ Chat Completion ] - Message length has less than 1500 characters, sending response`)
-                //   res.send(`<Response><Message>${gpt3Response}</Message></Response>`);
-                // } else {
-
-                console.log(`[ Chat Completion ] - Handling response message with ${textResponse.length} characters`);
-                // res.status(204).end();
-                // res.send(`<Response><Message>${welcomeText}</Message></Response>`);
+            } catch (err) {
+                console.log(`[ ERROR ][ BACKUP API FAILED ] - Backup api failed, sending failed response to user`);
+                await sendTwilioMessage(errorMessage, fromNumber)
 
             }
-            await sendResponse(textResponse, fromNumber);
 
-            // sendTwilioMessage1600Characters(gpt3Response, fromNumber);
-            //}
         }
+
+
     }
+
+
 };
 
 
@@ -591,7 +609,7 @@ async function sendTwilioMessage(gpt4Response, toNumber) {
         }
 
     } catch (err) {
-    
+
         console.log(`[ ERRROR ][ Chat Completion ][ Twilio Callback ]: Failed to send messages to Twilio client, error: ${err}`);
 
 
@@ -1251,7 +1269,7 @@ async function uploadFileToOpenAI(incomingMediaUrl) {
 
 async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
-    if(mediaType) {
+    if (mediaType) {
 
         console.log("[ Assistants API ][ Handle Message ] - Received message request with media type: ", mediaType);
 
@@ -1514,7 +1532,7 @@ async function generatetoolCallsTranscription(mediaUrl) {
 }
 
 async function cancelRun(threadId, runId) {
-    
+
 }
 
 class AssistantResponse {
