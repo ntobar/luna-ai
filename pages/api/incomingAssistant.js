@@ -1392,12 +1392,17 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
 
         if(mediaType) {
         if (mediaType == "image/jpeg") {
+            console.log("[ Assistants API ][ Handle Message ] - Media type for image found, using assistant with id ", visionApiAssistantId);
             assistant_id = visionApiAssistantId;
         } else {
+            console.log("[ Assistants API ][ Handle Message ] - Media type for audio found, using assistant with id ", transcribeAudioAssistantId);
+
             assistant_id = transcribeAudioAssistantId;
 
         }
     } else {
+        console.log("[ Assistants API ][ Handle Message ] - No Media type for found, using assistant for DALL-E-3 and text with id ", generateImageAndTextAssistantId);
+
         assistant_id = generateImageAndTextAssistantId;
     }
         // let assistant_id = 'asst_Br2fpSsagEd3LcYCP9fp2RQy';
