@@ -1505,7 +1505,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 
 
         // Array to hold the promises for each function call that needs to be handled
-        const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+        const toolOutputsPromises = await requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
             console.log("TOOLCALL!!!: ", toolCall);
             const tool_call_id = toolCall.tool_call_id;
             console.log("TOOLCALLID: ", tool_call_id);
