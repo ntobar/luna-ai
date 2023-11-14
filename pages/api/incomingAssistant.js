@@ -1244,7 +1244,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
                 // Create a Run to get the Assistant's response
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
-                    instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an image for analysis.`
+                    // instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an image for analysis.`
 
                     // instructions: additionalInstructions,
                 });
@@ -1253,7 +1253,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
 
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
-                    instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis and this run should only take care of the audio, not any images.`
+                    // instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis and this run should only take care of the audio, not any images.`
 
 
                 });
