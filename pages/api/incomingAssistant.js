@@ -45,6 +45,7 @@ const openai = new OpenAI({
 module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
+        console.log("REQUEST: ", req);
         console.log("Received webhook Request, initializing... ");
         // testConnection();
 
@@ -55,6 +56,10 @@ module.exports = async (req, res) => {
         let incomingMediaContentType = req.body.MediaContentType0;
         let fromNumber = req.body.From;
         const profileName = req.body.ProfileName;
+
+        if(!incomingMediaContentType) {
+            incomingMessage = null;
+        }
 
         console.table({
             'User: ': profileName,
@@ -124,14 +129,15 @@ module.exports = async (req, res) => {
             }
         }
 
-        // if (incomingMediaContentType == "audio/ogg") {
+        if (incomingMediaContentType == "audio/ogg") {
 
-        //     // incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
+            incomingMediaUrl = await convertAudioFile(incomingMediaUrl);
 
-        // }
+        }
 
         // incomingMediaContentType = "image/jpeg";
         // incomingMediaContentType = "audio/ogg";
+        // incomingMessage = "";
 
 
         let messageResponse;
@@ -142,6 +148,7 @@ module.exports = async (req, res) => {
         }
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
         console.log("MESSAGE RESPONSE: ", messageResponse);
+
 
         if (messageResponse.type == "image") {
             const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -683,7 +690,7 @@ async function visionApi(mediaUrl, prompt, mediaType) {
             max_tokens: 500,
         });
 
-        console.log("VISION RESPONSE: ", response);
+        // console.log("VISION RESPONSE: ", response);
         console.log("VISION RESPONSE CHOICES: ", JSON.stringify(response.choices));
         console.log("VISION RESPONSE CHOICES: ", JSON.stringify(response.choices[0].message.content));
 
@@ -915,7 +922,7 @@ async function preProcessAudioFile(incomingMediaUrl) {
 // }
 
 
-async function transcribeAudio(incomingMediaUrl) {
+async function transcribeAudio(incomingMediaUrl, mediaType) {
 
     console.log(`[ Audio Transcription  ][ OPENAI ] - Calling the openai Whisper-1 api for media with url: ${incomingMediaUrl}`);
 
@@ -980,9 +987,11 @@ async function setupAssistant() {
                             type: "object",
                             properties: {
                                 // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
-                                incomingMediaUrl: { type: "string", description: "The api.twilio.com audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" }
+                                incomingMediaUrl: { type: "string", description: "The api.twilio.com audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" },
+                                mediaType: { type: "string", description: "The media type for the Twilio media url audio. It will be audio/ogg" }
+
                             },
-                            required: ["incomingMediaUrl"]
+                            required: ["incomingMediaUrl", "mediaType"]
 
                             // required: ["mediaUrl", "tempFilePath"]
                         }
@@ -1242,6 +1251,11 @@ async function uploadFileToOpenAI(incomingMediaUrl) {
 
 async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
+    if(mediaType) {
+
+        console.log("[ Assistants API ][ Handle Message ] - Received message request with media type: ", mediaType);
+
+    }
     const assistantResponse = new AssistantResponse();
 
     try {
@@ -1311,6 +1325,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
         // If the assistant requires an action to be performed, handle it
         if (runStatus.status === "requires_action") {
             console.log("[ Assistants API ][ Action Required ] - The assistant requires an action to be performed");
+            console.log(`RUN: ----> ${JSON.stringify(runStatus)}`);
             // Call handleRequiredAction with necessary parameters. NOTE: Also passing in hard-coded id instead of assistant.id
             return await handleRequiredAction(runStatus.required_action, assistant_id, run.id, threadId);
         }
@@ -1365,7 +1380,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
             switch (functionName) {
                 case 'transcribeAudio':
                     console.log("ARGS OBJECT: ", argsObject);
-                    const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl);
+                    const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl, argsObject.mediaType);
                     console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
                     assistantResponse.setTextResponse(transcriptionOutput);
                     return {
@@ -1492,6 +1507,14 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 
     }
     // return imageUrl;
+}
+
+async function generatetoolCallsTranscription(mediaUrl) {
+    const responseJson = []
+}
+
+async function cancelRun(threadId, runId) {
+    
 }
 
 class AssistantResponse {
