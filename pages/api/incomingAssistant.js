@@ -1517,6 +1517,9 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         // } while (runStatus.status === 'active');
         while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
 
+            if(runStatus.status == "failed") {
+                throw new AssistantResponseError(openaiErrorMessage);
+            }
             // Wait for a couple of seconds before checking the status again
             await new Promise(resolve => setTimeout(resolve, 1000));
             runStatus = await checkRunStatus(threadId, run.id);
