@@ -146,6 +146,8 @@ module.exports = async (req, res) => {
             messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType, profileName);
         } catch (err) {
             console.log(`[ ERROR ][ POST REQUEST ] - ERROR handling message, going to backup api`);
+            await sendResponse(`[ System Notification ] - There was an error with the assistants api for ${profileName}, with incomingMediaType? ${incomingMediaContentType}, error: ${err}`, 'whatsapp:+18572009432');
+
             // await sendTwilioMessage(errorMessage, fromNumber)
         }
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
@@ -1572,6 +1574,10 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
         console.log(`[ ~~~~ DEBUGGING ~~~~ ] Tool call length: ${requiredAction.submit_tool_outputs.tool_calls.length}`)
         // Check if there are any tool calls and process only the first one
         if (requiredAction.submit_tool_outputs.tool_calls.length > 0) {
+            requiredAction.submit_tool_outputs.tool_calls.forEach(toolCall => {
+                console.log("TOOL CALLS!!!!!");
+                console.log(toolCall);
+            })
             const firstToolCall = requiredAction.submit_tool_outputs.tool_calls[0];
             console.log("FIRST TOOL CALL: ", firstToolCall);
 
