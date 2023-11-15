@@ -1319,13 +1319,12 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType, prof
 
                     // instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis and this run should only take care of the audio, not any images.`
 
-
                 });
             }
         } else {
             run = await openai.beta.threads.runs.create(threadId, {
                 assistant_id: assistantId,
-                instructions: profileName ? `Address the user as ${profileName}. You need to process the text prompt and decide if an image needs to be generated or just a text response` : "You need to process the text prompt and decide if an image needs to be generated or just a text response"
+                instructions: profileName ? `Address the user as ${profileName}. You need to process the text prompt` : "You need to process the text prompt"
             });
         }
 
