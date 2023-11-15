@@ -143,7 +143,7 @@ module.exports = async (req, res) => {
 
         let messageResponse;
         try {
-            messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType);
+            messageResponse = await handleMessage(existingUser.id, incomingMessage, incomingMediaUrl, incomingMediaContentType, profileName);
         } catch (err) {
             console.log(`[ ERROR ][ POST REQUEST ] - ERROR handling message, going to backup api`);
             // await sendTwilioMessage(errorMessage, fromNumber)
@@ -1198,28 +1198,55 @@ async function createThread() {
     return thread;
 }
 
-
 async function addMessageToThread(threadId, userMessage, mediaUrl) {
     console.log("[ Assistants API ][ Message Thread ] - Adding message to thread...");
 
     try {
         // If there's a user message, send it as text
         if (userMessage) {
+
+            if(!mediaUrl) {
             await openai.beta.threads.messages.create(threadId, {
                 role: "user",
                 content: userMessage // content should be a string
             });
-        }
-
-        // If there's a media URL, send it in a separate message
-        if (mediaUrl) {
+        } else {
             await openai.beta.threads.messages.create(threadId, {
                 role: "user",
-                content: mediaUrl, // assuming this is a string URL to the image
+                content: userMessage + " "+ mediaUrl // content should be a string
+            });
+        }
+        
+        } else {
+
+            await openai.beta.threads.messages.create(threadId, {
+                role: "user",
+                content: "Please transcribe this audio: " + mediaUrl, // assuming this is a string URL to the image
 
                 // content: `image: ${mediaUrl}`, // assuming this is a string URL to the image
             });
+
         }
+
+        // // If there's a media URL, send it in a separate message
+        // if (mediaUrl) {
+        //     if(!userMessage) {
+        //         await openai.beta.threads.messages.create(threadId, {
+        //             role: "user",
+        //             content: "Please transcribe this audio", // assuming this is a string URL to the image
+    
+        //             // content: `image: ${mediaUrl}`, // assuming this is a string URL to the image
+        //         });
+
+        //     } else {
+        //     await openai.beta.threads.messages.create(threadId, {
+        //         role: "user",
+        //         content: "", // assuming this is a string URL to the image
+
+        //         // content: `image: ${mediaUrl}`, // assuming this is a string URL to the image
+        //     });
+        // }
+        // }
 
         console.log("[ Assistants API ][ Message Thread ] - Succesfully added message to thread...");
 
@@ -1230,7 +1257,38 @@ async function addMessageToThread(threadId, userMessage, mediaUrl) {
 }
 
 
-async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
+// async function addMessageToThread(threadId, userMessage, mediaUrl) {
+//     console.log("[ Assistants API ][ Message Thread ] - Adding message to thread...");
+
+//     try {
+//         // If there's a user message, send it as text
+//         if (userMessage) {
+//             await openai.beta.threads.messages.create(threadId, {
+//                 role: "user",
+//                 content: userMessage // content should be a string
+//             });
+//         }
+
+//         // If there's a media URL, send it in a separate message
+//         if (mediaUrl) {
+//             await openai.beta.threads.messages.create(threadId, {
+//                 role: "user",
+//                 content: mediaUrl, // assuming this is a string URL to the image
+
+//                 // content: `image: ${mediaUrl}`, // assuming this is a string URL to the image
+//             });
+//         }
+
+//         console.log("[ Assistants API ][ Message Thread ] - Succesfully added message to thread...");
+
+//     } catch (err) {
+//         console.error(`[ ERROR ][ Assistants API ][ Message Thread ] - Error adding message to thread: ${err.message}`);
+//         throw new AssistantResponseError(openaiErrorMessage);
+//     }
+// }
+
+
+async function createRun(threadId, assistantId, mediaUrl, mediaContentType, profileName) {
     console.log("[ Assistants API ][ Create Run ] - Creating run for thread id: ", threadId);
 
     try {
@@ -1241,9 +1299,11 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
             if (mediaContentType == "image/jpeg") {
                 console.log(`[ Assistants API ][ Create Run ] - Image Media url found, creating run with media instructions`);
 
+
                 // Create a Run to get the Assistant's response
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
+                    instructions: profileName ? `Address the user as ${profileName}. You need to process the incoming media as an image for analysis` : "You need to process the incoming media as an image for analysis"
                     // instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an image for analysis.`
 
                     // instructions: additionalInstructions,
@@ -1253,6 +1313,8 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
 
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
+                    instructions: profileName ? `Address the user as ${profileName}. You need to process the incoming media as an audio for analysis` : "You need to process the incoming media as an audio for analysis"
+
                     // instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis and this run should only take care of the audio, not any images.`
 
 
@@ -1261,6 +1323,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType) {
         } else {
             run = await openai.beta.threads.runs.create(threadId, {
                 assistant_id: assistantId,
+                instructions: profileName ? `Address the user as ${profileName}. You need to process the text prompt and decide if an image needs to be generated or just a text response` : "You need to process the text prompt and decide if an image needs to be generated or just a text response"
             });
         }
 
@@ -1363,7 +1426,7 @@ async function uploadFileToOpenAI(incomingMediaUrl) {
 
 // let assistant;
 
-async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
+async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileName) {
     console.log("[ Assistants API ][ Handle Message ] - Received message request, handling user message: ", userMessage);
     if (mediaType) {
 
@@ -1422,7 +1485,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
 
         // Create a run to process the input. NOTE: Normally we would pass it assistant.id from above
         // but since we are using the hard-coded one, were just passing that value
-        const run = await createRun(threadId, assistant_id, mediaUrl, mediaType);
+        const run = await createRun(threadId, assistant_id, mediaUrl, mediaType, profileName);
 
 
         // const RUN_TIMEOUT = 15000; // Maximum time to wait for a run to complete in milliseconds.
@@ -1483,6 +1546,11 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType) {
 
             // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
             assistantResponse.setTextResponse(lastMessageForRun.content[0].text.value);
+
+            const logs = await openai.beta.threads.runs.steps.list(threadId, run.id);
+            logs.body.data.forEach(log =>  {
+                console.log(`[ Assistants API ][ LOGS ] - Log step details: ${log.step_details}`);
+            });
             return assistantResponse;
             // return lastMessageForRun;
             // return assistantMessages;
@@ -1501,6 +1569,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
     try {
         const assistantResponse = new AssistantResponse();
 
+        console.log(`[ ~~~~ DEBUGGING ~~~~ ] Tool call length: ${requiredAction.submit_tool_outputs.tool_calls.length}`)
         // Check if there are any tool calls and process only the first one
         if (requiredAction.submit_tool_outputs.tool_calls.length > 0) {
             const firstToolCall = requiredAction.submit_tool_outputs.tool_calls[0];
