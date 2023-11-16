@@ -1572,6 +1572,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
 
             if(runStatus.status === "failed" || runStatus.status === "expired") {
                 isfailedRun = true;
+                await cancelRun(threadId, run.id);
                 break;
             }
             // Wait for a couple of seconds before checking the status again
