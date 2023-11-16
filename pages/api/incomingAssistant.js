@@ -1376,6 +1376,7 @@ async function getAssistantMessages(threadId) {
 // Its main purpose is to handle concurrent request so that it validates a thread before allowing
 // More runs for that thread if there is one
 async function validateThread(threadId) {
+    try {
     const threadRuns = await retrieveThreadRuns(threadId);
 
     if(threadRuns) {
@@ -1386,8 +1387,14 @@ async function validateThread(threadId) {
         }
     }
 }
+    } catch(err) {
+        console.log("[ Validate Thread ] - No thread was able to be retrieved");
+        return true;
+    }
 
     return true;
+
+
 }
 
 async function retrieveThreadRuns(threadId) {
