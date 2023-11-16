@@ -46,3 +46,7 @@ export const openaiErrorMessage = `🚫 Oops! It seems there's a hiccup with the
 // export const errorMessage = `🚫 Oops! It seems there's a hiccup with the service right now. It could be Luna or the OpenAI GPT, we're looking into it. Please give it a moment and try again later. We apologize for any inconvenience and appreciate your patience!`;
 
 export const errorMessage = `🚫 Oops! It seems like Luna, OpenAI, or one of their digital buddies is throwing a glitch party. Please give it a moment and try again later while we're sorting it out! 🤖 🎉`;
+
+
+export const waitForNextQuestionMessage = "📣 🕓 Quick reminder: I'm best at one question at a time. Let me finish this one before we move on."
+

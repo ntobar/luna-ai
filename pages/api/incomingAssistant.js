@@ -14,7 +14,7 @@ const conversationRepository = require('../../db/conversationRepository');
 const messageRepository = require('../../db/messageRepository');
 
 import { json } from 'body-parser';
-import { englishWelcomeMessage, spanishWelcomeMessage, openaiErrorMessage, errorMessage } from './constants';
+import { englishWelcomeMessage, spanishWelcomeMessage, openaiErrorMessage, errorMessage, waitForNextQuestionMessage } from './constants';
 import { GPTTokens } from 'gpt-tokens';
 import { assert } from 'console';
 import { ConversationContextImpl } from 'twilio/lib/rest/conversations/v1/conversation';
@@ -139,6 +139,14 @@ module.exports = async (req, res) => {
         // incomingMediaContentType = "image/jpeg";
         // incomingMediaContentType = "audio/ogg";
         // incomingMessage = "";
+
+        const isThreadValidated = await validateThread(existingUser.id);
+        if(!isThreadValidated) {
+            console.log(`[ THREAD IS NOT VALIDATED ] - There is still an ongoing run for ${profileName}, ignoring request`);
+            await sendResponse(waitForNextQuestionMessage, fromNumber);
+            await sendResponse(`[ System Notification ] - 🚨 ${profileName} is sending concurrent requests`, 'whatsapp:+18572009432');
+            return;
+        }
 
 
         let messageResponse;
@@ -1364,6 +1372,31 @@ async function getAssistantMessages(threadId) {
     }
 }
 
+// This function validates that a given thread does not contain any ongoing runs
+// Its main purpose is to handle concurrent request so that it validates a thread before allowing
+// More runs for that thread if there is one
+async function validateThread(threadId) {
+    const threadRuns = await retrieveThreadRuns(threadId);
+
+    const validStatuses = new Set(["completed", "failed", "cancelled", "expired"]);
+    for (const run of threadRuns.data) {
+        if (!validStatuses.has(run.status)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+async function retrieveThreadRuns(threadId) {
+    const threadRuns =  await openai.beta.threads.runs.list(threadId);
+    if(threadRuns) {
+        return threadRuns;
+    } else {
+        throw AssistantResponseError(openaiErrorMessage);
+    }
+}
+
 // async function handleMessage(userId, userMessage, mediaUrl) {
 //     // Set up the Assistant
 //     const assistant = await setupAssistant();
@@ -1841,6 +1874,50 @@ class AssistantResponseError extends Error {
         super(message);
         this.name = `AssistantResponseError`;
         this.assistantResponse = assistantResponse;
+    }
+}
+
+
+class RequestQueue {
+    constructor() {
+        this.queue = [];
+        this.isProcessing = false;
+    }
+
+    // Add a request to the queue
+    async enqueue(request) {
+        this.queue.push(request);
+        if (!this.isProcessing) {
+            await this.processQueue();
+        }
+    }
+
+    // Process the queue
+    async processQueue() {
+        if (this.queue.length === 0) {
+            this.isProcessing = false;
+            return;
+        }
+
+        this.isProcessing = true;
+        const currentRequest = this.queue.shift();
+
+        try {
+            await this.handleRequest(currentRequest);
+        } catch (error) {
+            console.error('Error handling request:', error);
+        } finally {
+            await this.processQueue(); // Process the next request in the queue
+        }
+    }
+
+    // Handle an individual request (to be implemented)
+    async handleRequest(request) {
+        const { incomingMessage, incomingMediaUrl, incomingMediaContentType, fromNumber, profileName } = request;
+
+        // Your logic to handle the request
+        console.log('Handling request for: ', profileName);
+        // Include your chatbot's request handling logic here
     }
 }
 
