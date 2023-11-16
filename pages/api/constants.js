@@ -48,5 +48,5 @@ export const openaiErrorMessage = `🚫 Oops! It seems there's a hiccup with the
 export const errorMessage = `🚫 Oops! It seems like Luna, OpenAI, or one of their digital buddies is throwing a glitch party. Please give it a moment and try again later while we're sorting it out! 🤖 🎉`;
 
 
-export const waitForNextQuestionMessage = "📣 🕓 Quick reminder: I'm best at one question at a time. Let me finish this one before we move on."
+export const waitForNextQuestionMessage = "📣 🕓 Quick reminder! I can only handle one question at a time and won't be able to remember your next one. Let me answer this, and then feel free to resend your follow-up question."
 
