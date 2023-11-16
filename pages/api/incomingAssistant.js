@@ -1380,6 +1380,7 @@ async function validateThread(threadId) {
     const threadRuns = await retrieveThreadRuns(threadId);
 
     if(threadRuns) {
+        console.log("~~~ THREAD RUNS: ", threadRuns.data);
     const validStatuses = new Set(["completed", "failed", "cancelled", "expired"]);
     for (const run of threadRuns.data) {
         if (!validStatuses.has(run.status)) {
