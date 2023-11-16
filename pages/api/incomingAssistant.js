@@ -521,11 +521,11 @@ async function getGpt4Response(prompt, history) {
     try {
         // TODO: Uncomment!
         // console.log(`[ Chat Completion ] - Sending request to openai api with prompt: ${prompt}`);
-        console.log("OPENAI KEY: ", process.env.OPENAI_API_KEY);
-        const configuration = new Configuration({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
-        const openai = new OpenAIApi(configuration);
+        // console.log("OPENAI KEY: ", process.env.OPENAI_API_KEY);
+        // const configuration = new Configuration({
+        //     apiKey: process.env.OPENAI_API_KEY,
+        // });
+        // const openai = new OpenAIApi(configuration);
 
 
         let response;
@@ -535,18 +535,20 @@ async function getGpt4Response(prompt, history) {
             //   model: "gpt-4-32k",
             //   messages: [{ role: "user", content: prompt }],
             // });
-            response = await openai.createChatCompletion({
+            // response = await openai.createChatCompletion({
+                response = await openai.chat.completions.create({
+
                 // model: "gpt-3.5-turbo-16k",
                 // model: "gpt-4-1106-preview",
-                model: "gpt-3.5",
+                model: "gpt-3.5-turbo",
 
                 messages: [{ role: "user", content: prompt }],
             });
         } else {
             console.log("IN ELSE LINE 325: ");
-            response = await openai.createChatCompletion({
+            response = await openai.chat.completions.create({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-3.5",
+                model: "gpt-3.5-turboo",
                 // model: "gpt-4",
                 messages: prompt,
             });
@@ -557,12 +559,12 @@ async function getGpt4Response(prompt, history) {
             // });
         }
 
-        console.log(`response  :****  ${response}`);
-        console.log(`response data :****  ${JSON.stringify(response.data)}`);
-        console.log(`response data choices :****  ${JSON.stringify(response.data.choices)}`);
-        console.log(`response data choices message :****  ${JSON.stringify(response.data.choices[0])}`);
+        // console.log(`response  :****  ${response}`);
+        // console.log(`response data :****  ${JSON.stringify(response.data)}`);
+        console.log(`response data choices :****  ${JSON.stringify(response.choices)}`);
+        // console.log(`response data choices message :****  ${JSON.stringify(response.data.choices[0])}`);
 
-        return response.data;
+        return response;
         // return response.data.choices[0].message.content;
     } catch (err) {
 
