@@ -1378,12 +1378,14 @@ async function getAssistantMessages(threadId) {
 async function validateThread(threadId) {
     const threadRuns = await retrieveThreadRuns(threadId);
 
+    if(threadRuns) {
     const validStatuses = new Set(["completed", "failed", "cancelled", "expired"]);
     for (const run of threadRuns.data) {
         if (!validStatuses.has(run.status)) {
             return false;
         }
     }
+}
 
     return true;
 }
