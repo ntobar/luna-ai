@@ -1571,6 +1571,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
 
             if(runStatus.status === "failed" || runStatus.status === "expired") {
+                console.log(`[ ERROR ][ Assistants API ] - Run is failed or expired, status: ${runStatus.status}`);
                 isfailedRun = true;
                 await cancelRun(threadId, run.id);
                 break;
