@@ -1567,10 +1567,12 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         //     // Wait a short period before checking the status again
         //     await new Promise(resolve => setTimeout(resolve, 2000));
         // } while (runStatus.status === 'active');
+        let isfailedRun = false;
         while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
 
             if(runStatus.status == "failed") {
-                throw new AssistantResponseError(openaiErrorMessage);
+                isfailedRun = true;
+                break;
             }
             // Wait for a couple of seconds before checking the status again
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1579,6 +1581,10 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
             //     console.log("[ ERROR ][ Assistants API ][ Run Status ] - Run status failed, reason: ", run);
             //     return run.last_error;
             // }
+        }
+        if (isfailedRun) {
+            await cancelRun(threadId, run.id);
+            throw new AssistantResponseError(openaiErrorMessage);
         }
 
         // If the assistant requires an action to be performed, handle it
