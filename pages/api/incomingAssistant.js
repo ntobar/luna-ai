@@ -1376,6 +1376,8 @@ async function getAssistantMessages(threadId) {
 // Its main purpose is to handle concurrent request so that it validates a thread before allowing
 // More runs for that thread if there is one
 async function validateThread(threadId) {
+    console.log("[ Thread Validation ] - Validating thread runs for thread ", threadId);
+
     try {
     const threadRuns = await retrieveThreadRuns(threadId);
 
@@ -1399,10 +1401,14 @@ async function validateThread(threadId) {
 }
 
 async function retrieveThreadRuns(threadId) {
+    console.log("[ Thread Runs] - Retrieving thread runs for thread ", threadId);
+
     const threadRuns =  await openai.beta.threads.runs.list(threadId);
     if(threadRuns) {
+        console.log("[ Thread Runs] - Successfully retrieved thread runs: ", threadRuns.data);
         return threadRuns;
     } else {
+        console.log("[ Thread Runs] - No thread runs available");
         throw AssistantResponseError(openaiErrorMessage);
     }
 }
