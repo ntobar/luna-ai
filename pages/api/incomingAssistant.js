@@ -140,7 +140,8 @@ module.exports = async (req, res) => {
         // incomingMediaContentType = "audio/ogg";
         // incomingMessage = "";
 
-        const isThreadValidated = await validateThread(existingUser.id);
+        const threadId = await getThreadFromStorage(existingUser.id);
+        const isThreadValidated = await validateThread(threadId);
         if(!isThreadValidated) {
             console.log(`[ THREAD IS NOT VALIDATED ] - There is still an ongoing run for ${profileName}, ignoring request`);
             await sendResponse(waitForNextQuestionMessage, fromNumber);
