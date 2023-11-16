@@ -1570,7 +1570,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         let isfailedRun = false;
         while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
 
-            if(runStatus.status === "failed") {
+            if(runStatus.status === "failed" || runStatus.status === "expired") {
                 isfailedRun = true;
                 break;
             }
