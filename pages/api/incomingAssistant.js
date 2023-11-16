@@ -1385,7 +1385,7 @@ async function validateThread(threadId) {
     const threadRuns = await retrieveThreadRuns(threadId);
 
     if(threadRuns) {
-        console.log("~~~ THREAD RUNS: ", threadRuns.data);
+        // console.log("~~~ THREAD RUNS: ", threadRuns.data);
     const validStatuses = new Set(["completed", "failed", "cancelled", "expired"]);
     for (const run of threadRuns.data) {
         if (!validStatuses.has(run.status)) {
@@ -1408,7 +1408,7 @@ async function retrieveThreadRuns(threadId) {
 
     const threadRuns =  await openai.beta.threads.runs.list(threadId);
     if(threadRuns) {
-        console.log("[ Thread Runs] - Successfully retrieved thread runs: ", threadRuns.data);
+        console.log("[ Thread Runs] - Successfully retrieved thread runs for thread: ", threadId);
         return threadRuns;
     } else {
         console.log("[ Thread Runs] - No thread runs available");
