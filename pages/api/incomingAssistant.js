@@ -1306,6 +1306,12 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType, prof
 
     try {
 
+        // Split the full name by spaces
+let nameParts = profileName.split(" ");
+
+// The first name will be the first element of the split array
+let firstName = nameParts[0];
+
         let run;
         if (mediaUrl) {
 
@@ -1316,7 +1322,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType, prof
                 // Create a Run to get the Assistant's response
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
-                    instructions: profileName ? `Address the user as ${profileName}. You need to process the incoming media as an image for analysis` : "You need to process the incoming media as an image for analysis"
+                    instructions: profileName ? `Address the user as ${firstName}. You need to process the incoming media as an image for analysis` : "You need to process the incoming media as an image for analysis"
                     // instructions: `Process the input. If the URL is from 'api.twilio.com', treat it as an image for analysis.`
 
                     // instructions: additionalInstructions,
@@ -1326,7 +1332,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType, prof
 
                 run = await openai.beta.threads.runs.create(threadId, {
                     assistant_id: assistantId,
-                    instructions: profileName ? `Address the user as ${profileName}. You need to process the incoming media as an audio for analysis` : "You need to process the incoming media as an audio for analysis"
+                    instructions: profileName ? `Address the user as ${firstName}. You need to process the incoming media as an audio for analysis` : "You need to process the incoming media as an audio for analysis"
 
                     // instructions: `Process the input. If the URL is from 'cloud convert', treat it as an audio for analysis and this run should only take care of the audio, not any images.`
 
@@ -1335,7 +1341,7 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType, prof
         } else {
             run = await openai.beta.threads.runs.create(threadId, {
                 assistant_id: assistantId,
-                instructions: profileName ? `Address the user as ${profileName}. You need to process the text prompt` : "You need to process the text prompt"
+                instructions: profileName ? `Address the user as ${firstName}. You need to process the text prompt` : "You need to process the text prompt"
             });
         }
 
