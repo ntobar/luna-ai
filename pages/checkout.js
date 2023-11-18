@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Elements } from '@stripe/react-stripe-js';
-import getStripe from '../lib/stripe';
+import getStripe from '../utils/stripe';
 
-import CheckoutForm from '../components/CheckoutForm';
+
+import CheckoutForm from './CheckoutForm';
 
 const stripePromise = getStripe();
 
 const CheckoutPage = () => {
   const router = useRouter();
 
+  console.log("STRIPE PROMISE: ", stripePromise);
   const [message, setMessage] = useState('');
 
   const onSuccessfulCheckout = () => {

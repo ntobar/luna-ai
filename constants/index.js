@@ -28,77 +28,90 @@
 export const exploreWorlds = [
   {
     id: 'world-1',
-    imgUrl: '/planet-01.png',
-    title: 'The Digital Metropolis',
-    description: 'A universe of information, just a message away',
+    imgUrl: '/audio.png',
+    title: 'The Silent Symphony',
+    description: 'Capture your voice notes in text',
   },
   {
     id: 'world-2',
-    imgUrl: '/planet-02.png',
-    title: 'The Command Center',
-    description: 'Automated messaging at its finest',
+    imgUrl: '/image.png',
+    title: 'The Observatory',
+    description: 'Insightful Visual Analysis',
   },
   {
     id: 'world-3',
-    imgUrl: '/planet-03.png',
+    imgUrl: '/books.png',
     title: 'The Library',
     description: 'Knowledge at your fingertips',
   },
   {
     id: 'world-4',
-    imgUrl: '/planet-04.png',
-    title: 'The Concierge',
-    description: 'Personalized attention, AI-powered.',
+    imgUrl: '/photophoto.png',
+    title: 'The Studio',
+    description: 'Craft imagery with AI precision, straight from your chat.',
   },
   {
     id: 'world-5',
-    imgUrl: '/planet-05.png',
-    title: 'The Studio',
-    description: 'Craft imagery with AI precision, straight from your chat',
+    imgUrl: '/imageprompt.png',
+    title: 'Memory Lane',
+    description: 'Where every chat lives on',
   },
 ];
 
 
 export const startingFeatures = [
-  `Simply add Luna's contact number to your WhatsApp contacts`,
+  `Simply signup to get access`,
+  `Add Luna as a contact`,
   `Start a conversation with Luna right away - there's no complex setup or training period. Luna is ready to assist from the moment you say hello`,
-  `Adjust Luna's level of interaction and access according to your preferences, making it a truly personalized chat assistant`,
 ];
 
 export const newFeatures = [
   {
     imgUrl: '/vrpano.svg',
-    title: 'Powered by GPT-4',
+    title: 'History no longer a Mystery',
     subtitle:
-        `Luna is one of the first chat assistants to leverage the power of GPT-4`,
+        `Remember 300 pages of interactions`,
   },
   {
     imgUrl: '/headset.svg',
-    title: 'Dynamic Learning',
+    title: 'Silent Hearing',
     subtitle:
-        `Luna.ai's unique design allows it to learn from your conversations`,
+        `Transcribe voice notes`,
+  },
+  {
+    imgUrl: '/headset.svg',
+    title: 'Creative Generation',
+    subtitle:
+        `let you send image-based prompts`,
+  },
+  {
+    imgUrl: '/headset.svg',
+    title: 'Creative Imagination',
+    subtitle:
+        `Generate high-quality images based on your thoughts`,
   },
 ];
 
 export const insights = [
   {
-    imgUrl: '/planet-06.png',
-    title: 'Intelligent Assistance',
+    imgUrl: '/books.png',
+    title: 'Intuitive Intelligence',
     subtitle:
-        'Leveraging natural language processing and machine learning, Luna.ai delivers contextually accurate and timely responses for efficient chat management.',
+        `No keywords, no tags, Luna will know what you want, whether it be image generation, text-responses, etc,  Luna will give you a truly personalized chat experience.`,
   },
   {
-    imgUrl: '/planet-07.png',
+    imgUrl: '/photophoto.png',
+    title: 'State-of-the-art',
+    subtitle:
+        'Luna generates images from DALL-E-3, offering the highest quality generations and creativity.',
+  },
+  {
+    imgUrl: '/imageprompt.png',
     title: 'Adaptive Learning',
     subtitle:
-        'Luna.ai continually learns from conversations, improving its responses and interactions over time, providing a personalized chat experience.',
+        'Luna continually learns from conversations, improving its responses and interactions over time, providing a personalized chat experience.',
   },
-  {
-    imgUrl: '/planet-08.png',
-    title: 'Customizable Interaction',
-    subtitle:
-        `Luna.ai's level of interaction can be tailored to user preferences, ranging from sporadic recommendations to responding only when addressed directly, for a truly personalized chat experience.`,
-  },
+
 ];
 
 export const socials = [

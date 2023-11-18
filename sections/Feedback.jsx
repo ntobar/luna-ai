@@ -29,10 +29,9 @@ const Feedback = () => (
         </div>
 
         <p className="mt-[24px] font-normal sm:text-[24px] text-[18px] sm:leading-[45.6px] leading-[39.6px] text-white">
-          “In an era driven by AI advancements, Luna stands out by embedding
-           our ordinary chats with an AI-driven toolbox. 
-          It's like having a smart assistant in every conversation, 
-          making each interaction more engaging and productive.”
+          “In an era driven by AI advancements, Luna stands out by transforming everyday 
+          chats into an AI-driven toolbox.
+          Luna isnt just an assistant, its a revolution in your pocket.
         </p>
       </motion.div>
 
@@ -41,7 +40,7 @@ const Feedback = () => (
         className="relative flex-1 flex justify-center items-center"
       >
         <img
-          src="/planet-09.png"
+          src="/finalbanner.png"
           alt="planet-09"
           className="w-full lg:h-[610px] h-auto min-h-[210px] object-cover rounded-[40px]"
         />

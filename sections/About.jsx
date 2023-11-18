@@ -37,10 +37,10 @@ const About = () => (
         of the metaverse by scrolling down */}
         <span className="font-extrabold text-white">Luna</span> is the dawn of a new 
 era in digital communication, where the power of artificial intelligence meets 
-the convenience of WhatsApp. Powered by GPT-4, Luna is a Whatsapp contact which you can chat with, meaning you are essentially chatting with ChatGPT from your Whatsapp application. With Luna, your chats are 
+the convenience of WhatsApp. Powered by the latest GPT-4, Luna is a Whatsapp contact which you can chat with, meaning you are essentially chatting with ChatGPT from your Whatsapp application. With Luna, your chats are 
 <span className="font-extrabold text-white"> turbocharged</span>, enabling 
-you to not just send messages, but to interact with an evolving intelligence 
-from the convenience of your favorite chat app. It's the AI revolution in the 
+you to not just send messages, but to transcribe voice notes, generate images, and even send image-based prompts like taking a picture at a restaurant and getting back the recipe.
+All from the convenience of your favorite chat app. Oh and did I mention, Luna remembers your conversation, you can ask it about a voice note you transcribed weeks ago, or about the existentialist question you asked before. It's the AI revolution in the 
 palm of your hand, transforming regular chats into an 
 <span className="font-extrabold text-white"> arena of powerful, AI-driven tools</span>. 
 Using Luna is like having a personal assistant in your chats, providing real-time 

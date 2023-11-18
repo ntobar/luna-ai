@@ -24,14 +24,35 @@
   filter: blur(125px);
 }
 
-.hero-gradient {
+/* .hero-gradient {
   background: linear-gradient(
     97.86deg,
     #a509ff 0%,
     #34acc7 53.65%,
     #a134c7 100%
   );
+} */
+
+.hero-gradient {
+  background: linear-gradient(
+    97.86deg,
+    #00c6ff 0%, /* bright sky blue */
+    #302b63 30%, /* purple indigo */
+    #24243e 60%, /* dark slate gray */
+    #53495d 100% /* lavender purple */
+  );
+} 
+
+.hero-gradient1 {
+  background: linear-gradient(
+    97.86deg,
+    #00c6ff 0%, /* bright sky blue */
+    #0072ff 50%, /* azure blue */
+    #8800ff 100% /* warm purple */
+  );
 }
+
+
 
 .gradient-02 {
   position: absolute;
@@ -105,3 +126,9 @@
   background: #65c4fa;
   filter: blur(150px);
 }
+
+/* .shadow-color {
+  --tw-shadow-color: #e21313;
+  --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -2px var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+} */

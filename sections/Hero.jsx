@@ -1,6 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
+
 
 import styles from '../styles';
 import { slideIn, staggerContainer, textVariant } from '../utils/motion';
@@ -16,18 +18,22 @@ const Hero = () => (
     >
       <div className="flex justify-center items-center flex-col relative z-10">
         <motion.h1 variants={textVariant(1.1)} className={styles.heroHeading}>
-          Luna
+        {/* <div className="flex flex-col items-center justify-center my-6"> */}
+      <Image src="/lunalogoround.png" alt="Luna.AI Logo" width={300} height={300} />
+    {/* </div> */}
+          Luna.AI
         </motion.h1>
         <motion.div
           variants={textVariant(1.2)}
           className="flex flex-row justify-center items-center"
         >
+          
           {/* <h1 className={styles.heroHeading}>AI.</h1> */}
-          <h1 className={`${styles.heroHeading} mr-10`}>AI</h1>
-          <div className={styles.heroDText} />
+          {/* <h1 className={`${styles.heroHeading} mr-10`}>AI</h1> */}
+          {/* <div className={styles.heroDText} /> */}
           {/* <h1 className={styles.heroHeading}>ness</h1> */}
 
-          <h1 className={styles.heroHeading}>ialogue</h1>
+          <h1 className={styles.heroHeading}>WhatsApp GPT</h1>
         </motion.div>
       </div>
 
@@ -35,13 +41,16 @@ const Hero = () => (
         variants={slideIn('right', 'tween', 0.2, 1)}
         className="relative w-full md:-mt-[20px] -mt-[12px]"
       >
-        <div className="absolute w-full h-[300px] hero-gradient rounded-tl-[140px] z-[0] -top-[30px]" />
+        {/* <div className="absolute w-full h-[300px] hero-gradient rounded-tl-[140px] z-[0] -top-[30px]" /> */}
 
         <img
-          src="/cover.png"
+          src="/cover1.png"
           // src="/lunalogo.png"
           alt="hero_cover"
-          className="w-full sm:h-[500px] h-[350px] object-cover rounded-tl-[140px] z-10 relative"
+
+          className="w-full sm:h-[500px] h-[350px] object-cover rounded-[50px] z-10 relative"
+
+          // className="w-full sm:h-[500px] h-[350px] object-cover rounded-tl-[140px] z-10 relative"
         />
 
         {/* <a href="#explore">
