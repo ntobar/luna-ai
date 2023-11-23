@@ -7,7 +7,7 @@ export default function ContactCard() {
         name: 'Nicolas Tobar',
         title: 'Founder Luna.AI',
         email: 'nicolas.tobarb@gmail.com',
-        phone: '+18572009432',
+        // phone: '+18572009432',
     });
 
     return (
@@ -15,7 +15,7 @@ export default function ContactCard() {
             <h2 className="name">{contact.name}</h2>
             <p className="title">{contact.title}</p>
             <p className="email">{contact.email}</p>
-            <p className="phone">{contact.phone}</p>
+            {/* <p className="phone">{contact.phone}</p> */}
             <style jsx>{`
                 .card {
                     border: 1px solid #ddd;
