@@ -1533,7 +1533,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         // Hard-coded assistant so we dont create a new one for each request
         // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
 
-        assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
+        // assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
 
         // Get or create a thread for the user
         const threadId = await getOrCreateThread(userId);
