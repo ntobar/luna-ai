@@ -1587,6 +1587,13 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
             // Wait for a couple of seconds before checking the status again
             await new Promise(resolve => setTimeout(resolve, 1000));
             runStatus = await checkRunStatus(threadId, run.id);
+
+            if (runStatus == "failed" || runStatus == "expired") {
+                // Handle failed or expired run status appropriately
+                isfailedRun = true;
+                await cancelRun(threadId, run.id);
+                break;
+            }
             // if (runStatus.status == "failed") {
             //     console.log("[ ERROR ][ Assistants API ][ Run Status ] - Run status failed, reason: ", run);
             //     return run.last_error;
