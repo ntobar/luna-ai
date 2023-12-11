@@ -110,6 +110,9 @@ module.exports = async (req, res) => {
                 }
             });
 
+            await sendResponse(`[ System Notification ] - ${message}`, 'whatsapp:+18572009432');
+
+
             // if (incomingMessage) {
             //     await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna! Prompt: \n ${incomingMessage}`, 'whatsapp:+18572009432');
             // } else {
@@ -140,6 +143,8 @@ module.exports = async (req, res) => {
 
 
                 Logger.info(message, { eventType: 'UserInteraction', userName: profileName });
+                await sendResponse(`[ System Notification ] - ${message}`, 'whatsapp:+18572009432');
+
                 // if (incomingMessage) {
                 //     await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
                 // } else {
