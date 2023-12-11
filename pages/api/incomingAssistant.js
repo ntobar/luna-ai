@@ -97,11 +97,19 @@ module.exports = async (req, res) => {
         if (existingUser) {
             // User already exists, update last_seen
             await userRepository.updateLastSeen(existingUser.id);
-            if (incomingMessage) {
-                await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna! Prompt: \n ${incomingMessage}`, 'whatsapp:+18572009432');
-            } else {
-                await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna!`, 'whatsapp:+18572009432');
-            }
+
+            const message = incomingMessage
+                ? `Existing user: ${profileName} has interacted with Luna! Prompt: \n ${incomingMessage}`
+                : `Existing user: ${profileName} has interacted with Luna for audio transcription!`;
+
+
+            Logger.info(message, { eventType: 'UserInteraction', userName: profileName });
+
+            // if (incomingMessage) {
+            //     await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna! Prompt: \n ${incomingMessage}`, 'whatsapp:+18572009432');
+            // } else {
+            //     await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna!`, 'whatsapp:+18572009432');
+            // }
             res.status(204).end();
         } else {
             // User doesn't exist, create new user
@@ -121,12 +129,18 @@ module.exports = async (req, res) => {
                     welcomeText = spanishWelcomeMessage[0].replace('{profile}', profileName ? profileName : '');
                 }
 
-                if (incomingMessage) {
-                    await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
-                } else {
-                    await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
+                const message = incomingMessage
+                    ? `New User: ${profileName} with phone number ${whatsappNumber} has interacted with Luna! Prompt: \n ${incomingMessage}, Welcome Text: ${welcomeText}`
+                    : `New User: ${profileName} with phone number ${whatsappNumber} has interacted with Luna for audio transcription! Welome Text: ${welcomeText}`;
 
-                }
+
+                Logger.info(message, { eventType: 'UserInteraction', userName: profileName });
+                // if (incomingMessage) {
+                //     await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
+                // } else {
+                //     await sendResponse(`[ System Notification ] - New User ${profileName} with phone number ${whatsappNumber} has interacted with Luna! \n Welcome Text: ${welcomeText} \n Prompt: ${incomingMessage}`, 'whatsapp:+18572009432');
+
+                // }
                 res.setHeader('Content-Type', 'text/xml');
                 res.send(`<Response><Message>${welcomeText}</Message></Response>`);
             }
@@ -144,7 +158,7 @@ module.exports = async (req, res) => {
 
         const threadId = await getThreadFromStorage(existingUser.id);
         const isThreadValidated = await validateThread(threadId);
-        if(!isThreadValidated) {
+        if (!isThreadValidated) {
             console.log(`[ THREAD IS NOT VALIDATED ] - There is still an ongoing run for ${profileName}, ignoring request`);
             await sendResponse(waitForNextQuestionMessage, fromNumber);
             await sendResponse(`[ System Notification ] - 🚨 ${profileName} is sending concurrent requests`, 'whatsapp:+18572009432');
@@ -538,7 +552,7 @@ async function getGpt4Response(prompt, history) {
             //   messages: [{ role: "user", content: prompt }],
             // });
             // response = await openai.createChatCompletion({
-                response = await openai.chat.completions.create({
+            response = await openai.chat.completions.create({
 
                 // model: "gpt-3.5-turbo-16k",
                 // model: "gpt-4-1106-preview",
@@ -1077,36 +1091,65 @@ async function setupAssistant() {
 
 async function setupSpecializedAssistant(mediaContentType) {
     try {
-    let assistant;
-    if (mediaContentType) {
-        if (mediaContentType == "image/jpeg") {
-            console.log(`[ Assistants API ][ Setup Assistant ] - Image Media url found, creating assistant for image/jpeg`);
+        let assistant;
+        if (mediaContentType) {
+            if (mediaContentType == "image/jpeg") {
+                console.log(`[ Assistants API ][ Setup Assistant ] - Image Media url found, creating assistant for image/jpeg`);
 
-            assistant = await openai.beta.assistants.create({
-                // model: "gpt-4-1106-preview", // Replace with the correct model you are using
-                model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
-                instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
-                tools: [
-                    {
-                        type: "function",
-                        function: {
-                            name: "visionApi",
-                            description: "Call the visionApi function to respond to the user when they send a twilio media url and a text prompt.",
-                            parameters: {
-                                type: "object",
-                                properties: {
-                                    mediaUrl: { type: "string", description: "The api.twilio.com Media URL of the image, and its required. The mediaUrl will be from api.twilio.com, and you should treat is as a jpeg image." },
-                                    prompt: { type: "string", description: "The prompt for the vision API, and its required" },
-                                    mediaType: { type: "string", description: "The media type for the Twilio media url picture" }
-                                },
-                                required: ["mediaUrl", "prompt", "mediaType"]
+                assistant = await openai.beta.assistants.create({
+                    // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+                    model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+                    instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
+                    tools: [
+                        {
+                            type: "function",
+                            function: {
+                                name: "visionApi",
+                                description: "Call the visionApi function to respond to the user when they send a twilio media url and a text prompt.",
+                                parameters: {
+                                    type: "object",
+                                    properties: {
+                                        mediaUrl: { type: "string", description: "The api.twilio.com Media URL of the image, and its required. The mediaUrl will be from api.twilio.com, and you should treat is as a jpeg image." },
+                                        prompt: { type: "string", description: "The prompt for the vision API, and its required" },
+                                        mediaType: { type: "string", description: "The media type for the Twilio media url picture" }
+                                    },
+                                    required: ["mediaUrl", "prompt", "mediaType"]
+                                }
                             }
                         }
-                    }
-                ]
-            });
+                    ]
+                });
+            } else {
+                console.log(`[ Assistants API ][ Setup Assistant ] - Image Media url found, creating assistant for audio/ogg`);
+
+                assistant = await openai.beta.assistants.create({
+                    // model: "gpt-4-1106-preview", // Replace with the correct model you are using
+                    model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
+                    instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
+                    tools: [
+                        {
+                            type: "function",
+                            function: {
+                                name: "transcribeAudio",
+                                description: "Transcribe an audio from a given URL. The media url sent will be a url from twilio.",
+                                parameters: {
+                                    type: "object",
+                                    properties: {
+                                        // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
+                                        incomingMediaUrl: { type: "string", description: "The twilio audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" },
+                                        mediaType: { type: "string", description: "The media type for the twilio url audio. It will be audio/ogg" }
+
+                                    },
+                                    required: ["incomingMediaUrl", "mediaType"]
+
+                                    // required: ["mediaUrl", "tempFilePath"]
+                                }
+                            }
+                        }
+                    ]
+                });
+            }
         } else {
-            console.log(`[ Assistants API ][ Setup Assistant ] - Image Media url found, creating assistant for audio/ogg`);
 
             assistant = await openai.beta.assistants.create({
                 // model: "gpt-4-1106-preview", // Replace with the correct model you are using
@@ -1116,58 +1159,29 @@ async function setupSpecializedAssistant(mediaContentType) {
                     {
                         type: "function",
                         function: {
-                            name: "transcribeAudio",
-                            description: "Transcribe an audio from a given URL. The media url sent will be a url from twilio.",
+                            name: "generateImage",
+                            description: "Generate an image based on a prompt",
                             parameters: {
                                 type: "object",
                                 properties: {
-                                    // mediaUrl: { type: "string", description: "URL of the audio file to transcribe" },
-                                    incomingMediaUrl: { type: "string", description: "The twilio audio file Media url to transcribe, its required. The incomingMediaUrl will be from api.twilio.com, and you should treat is as an audio file" },
-                                    mediaType: { type: "string", description: "The media type for the twilio url audio. It will be audio/ogg" }
-    
+                                    textPrompt: { type: "string", description: "The prompt for the image to be generated. This function should NOT be called if a media url is provided" },
+                                    isHd: { type: "boolean", description: "Whether to generate the image in HD" }
                                 },
-                                required: ["incomingMediaUrl", "mediaType"]
-    
-                                // required: ["mediaUrl", "tempFilePath"]
+                                required: ["textPrompt"]
                             }
                         }
                     }
                 ]
             });
+
         }
-    } else {
 
-        assistant = await openai.beta.assistants.create({
-            // model: "gpt-4-1106-preview", // Replace with the correct model you are using
-            model: "gpt-3.5-turbo-1106", // Replace with the correct model you are using
-            instructions: "This assistant can handle free-form text questions, transcribe audio, generate images, and use image-based prompts. It will determine which function to call based on user input. Only ONE function should be called per interaction. Treat all api.twilio.com urls as media that will either be an audio or an image. If a media url is provided, then its guaranteed that an action is required. For media URLs, distinguish between images and audio files. If the URL ends with a .jpeg extension or is from 'api.twilio.com', treat it as an image for analysis using the vision API. If the URL is from 'cloud convert', treat it as an audio file for transcription ",
-            tools: [
-                {
-                    type: "function",
-                    function: {
-                        name: "generateImage",
-                        description: "Generate an image based on a prompt",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                textPrompt: { type: "string", description: "The prompt for the image to be generated. This function should NOT be called if a media url is provided" },
-                                isHd: { type: "boolean", description: "Whether to generate the image in HD" }
-                            },
-                            required: ["textPrompt"]
-                        }
-                    }
-                }
-            ]
-        });
-        
+        console.log(`[ Assistants API ][ Setup Specialized Assistant ] - Successfully created new Assistant with id: ${assistant.id}`);
+        return assistant;
+    } catch (err) {
+        console.log(`[ ERROR ][ Assistants API ][ Setup Specialized Assistant ] - Failed to create new Assistant, error: ${err}}`);
+        throw new AssistantResponseError(openaiErrorMessage);
     }
-
-    console.log(`[ Assistants API ][ Setup Specialized Assistant ] - Successfully created new Assistant with id: ${assistant.id}`);
-    return assistant;
-} catch(err) {
-    console.log(`[ ERROR ][ Assistants API ][ Setup Specialized Assistant ] - Failed to create new Assistant, error: ${err}}`);
-    throw new AssistantResponseError(openaiErrorMessage);
-}
 
 }
 
@@ -1220,18 +1234,18 @@ async function addMessageToThread(threadId, userMessage, mediaUrl) {
         // If there's a user message, send it as text
         if (userMessage) {
 
-            if(!mediaUrl) {
-            await openai.beta.threads.messages.create(threadId, {
-                role: "user",
-                content: userMessage // content should be a string
-            });
-        } else {
-            await openai.beta.threads.messages.create(threadId, {
-                role: "user",
-                content: userMessage + " "+ mediaUrl // content should be a string
-            });
-        }
-        
+            if (!mediaUrl) {
+                await openai.beta.threads.messages.create(threadId, {
+                    role: "user",
+                    content: userMessage // content should be a string
+                });
+            } else {
+                await openai.beta.threads.messages.create(threadId, {
+                    role: "user",
+                    content: userMessage + " " + mediaUrl // content should be a string
+                });
+            }
+
         } else {
 
             await openai.beta.threads.messages.create(threadId, {
@@ -1249,7 +1263,7 @@ async function addMessageToThread(threadId, userMessage, mediaUrl) {
         //         await openai.beta.threads.messages.create(threadId, {
         //             role: "user",
         //             content: "Please transcribe this audio", // assuming this is a string URL to the image
-    
+
         //             // content: `image: ${mediaUrl}`, // assuming this is a string URL to the image
         //         });
 
@@ -1309,10 +1323,10 @@ async function createRun(threadId, assistantId, mediaUrl, mediaContentType, prof
     try {
 
         // Split the full name by spaces
-let nameParts = profileName.split(" ");
+        let nameParts = profileName.split(" ");
 
-// The first name will be the first element of the split array
-let firstName = nameParts[0];
+        // The first name will be the first element of the split array
+        let firstName = nameParts[0];
 
         let run;
         if (mediaUrl) {
@@ -1390,18 +1404,18 @@ async function validateThread(threadId) {
     console.log("[ Thread Validation ] - Validating thread runs for thread ", threadId);
 
     try {
-    const threadRuns = await retrieveThreadRuns(threadId);
+        const threadRuns = await retrieveThreadRuns(threadId);
 
-    if(threadRuns) {
-        // console.log("~~~ THREAD RUNS: ", threadRuns.data);
-    const validStatuses = new Set(["completed", "failed", "cancelled", "expired"]);
-    for (const run of threadRuns.data) {
-        if (!validStatuses.has(run.status)) {
-            return false;
+        if (threadRuns) {
+            // console.log("~~~ THREAD RUNS: ", threadRuns.data);
+            const validStatuses = new Set(["completed", "failed", "cancelled", "expired"]);
+            for (const run of threadRuns.data) {
+                if (!validStatuses.has(run.status)) {
+                    return false;
+                }
+            }
         }
-    }
-}
-    } catch(err) {
+    } catch (err) {
         console.log("[ Validate Thread ] - No thread was able to be retrieved");
         return true;
     }
@@ -1414,8 +1428,8 @@ async function validateThread(threadId) {
 async function retrieveThreadRuns(threadId) {
     console.log("[ Thread Runs] - Retrieving thread runs for thread ", threadId);
 
-    const threadRuns =  await openai.beta.threads.runs.list(threadId);
-    if(threadRuns) {
+    const threadRuns = await openai.beta.threads.runs.list(threadId);
+    if (threadRuns) {
         console.log("[ Thread Runs] - Successfully retrieved thread runs for thread: ", threadId);
         return threadRuns;
     } else {
@@ -1514,21 +1528,21 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         // let assistant_id = 'asst_Lbe2bp6HuYz8QErB4rogMeJj';
         let assistant_id;
 
-        if(mediaType) {
-        if (mediaType == "image/jpeg") {
-            console.log("[ Assistants API ][ Handle Message ] - Media type for image found, using assistant with id ", visionApiAssistantId);
-            assistant_id = visionApiAssistantId;
+        if (mediaType) {
+            if (mediaType == "image/jpeg") {
+                console.log("[ Assistants API ][ Handle Message ] - Media type for image found, using assistant with id ", visionApiAssistantId);
+                assistant_id = visionApiAssistantId;
+            } else {
+                console.log("[ Assistants API ][ Handle Message ] - Media type for audio found, using assistant with id ", transcribeAudioAssistantId);
+
+                assistant_id = transcribeAudioAssistantId;
+
+            }
         } else {
-            console.log("[ Assistants API ][ Handle Message ] - Media type for audio found, using assistant with id ", transcribeAudioAssistantId);
+            console.log("[ Assistants API ][ Handle Message ] - No Media type for found, using assistant for DALL-E-3 and text with id ", generateImageAndTextAssistantId);
 
-            assistant_id = transcribeAudioAssistantId;
-
+            assistant_id = generateImageAndTextAssistantId;
         }
-    } else {
-        console.log("[ Assistants API ][ Handle Message ] - No Media type for found, using assistant for DALL-E-3 and text with id ", generateImageAndTextAssistantId);
-
-        assistant_id = generateImageAndTextAssistantId;
-    }
         // let assistant_id = 'asst_Br2fpSsagEd3LcYCP9fp2RQy';
 
 
@@ -1581,7 +1595,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         while (runStatus.status !== "completed" && runStatus.status !== "requires_action") {
 
             console.log(`[ Assistants API ][ Run Status ] - current run status in handleMessage --> ${runStatus.status}`);
-            if(runStatus.status == "failed" || runStatus.status == "expired") {
+            if (runStatus.status == "failed" || runStatus.status == "expired") {
                 console.log(`[ ERROR ][ Assistants API ] - Run is failed or expired, status: ${runStatus.status}`);
                 isfailedRun = true;
                 await cancelRun(threadId, run.id);
@@ -1630,7 +1644,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
             assistantResponse.setTextResponse(lastMessageForRun.content[0].text.value);
 
             const logs = await openai.beta.threads.runs.steps.list(threadId, run.id);
-            logs.body.data.forEach(log =>  {
+            logs.body.data.forEach(log => {
                 console.log(`[ Assistants API ][ LOGS ] - Log step details: ${log.step_details}`);
             });
             return assistantResponse;
@@ -1874,11 +1888,11 @@ async function generatetoolCallsTranscription(mediaUrl) {
 
 async function cancelRun(threadId, runId) {
     try {
-    await openai.beta.threads.runs.cancel(threadId, runId);
+        await openai.beta.threads.runs.cancel(threadId, runId);
 
-    console.log(`[ Assistants API ][ Cancel Run ] - Successfully cancelled run ${runId} for thread ${threadId}, error: ${err}`);
+        console.log(`[ Assistants API ][ Cancel Run ] - Successfully cancelled run ${runId} for thread ${threadId}, error: ${err}`);
 
-    }catch(err) {
+    } catch (err) {
         console.log(`[ ERROR ][ Assistants API ][ Cancel Run ] - Error canceling run ${runId} for thread ${threadId}, error: ${err}`);
     }
 }
