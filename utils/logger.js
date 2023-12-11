@@ -18,6 +18,10 @@ class DatadogTransport extends Transport {
       this.emit('logged', info);
     });
 
+    // Extract the metadata from the info object
+    const metadata = info.metadata || {};
+
+
     // Perform the writing to the remote service
     this.http.post(`/v1/input/${this.apiKey}`, {
       message: info.message,
@@ -25,6 +29,7 @@ class DatadogTransport extends Transport {
       ddtags: 'env:production,version:1.0.0',
       hostname: 'luna-droplet',
       service: 'luna-chatbot',
+      ...metadata,
     })
     .then((response) => {
       callback();
