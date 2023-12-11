@@ -16,6 +16,7 @@ const messageRepository = require('../../db/messageRepository');
 import { json } from 'body-parser';
 import { englishWelcomeMessage, spanishWelcomeMessage, openaiErrorMessage, errorMessage, waitForNextQuestionMessage } from './constants';
 import { GPTTokens } from 'gpt-tokens';
+import { Logger } from '../../utils/logger';
 import { assert } from 'console';
 import { ConversationContextImpl } from 'twilio/lib/rest/conversations/v1/conversation';
 // import { encode, decode, encodeChat, isWithinTokenLimit, Tokenizer } from 'gpt-tokenizer/esm/model/gpt-4';
@@ -48,6 +49,7 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
         // console.log("REQUEST: ", req);
         console.log("Received webhook Request, initializing... ");
+        Logger.info("DATADOG test log, incoming webhook request received")
         // testConnection();
 
         console.log(`${JSON.stringify(req.body)}`)
