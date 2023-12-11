@@ -103,7 +103,12 @@ module.exports = async (req, res) => {
                 : `Existing user: ${profileName} has interacted with Luna for audio transcription!`;
 
 
-            Logger.info(message, { eventType: 'UserInteraction', userName: profileName });
+            Logger.info(message, {
+                metadata: {
+                    eventType: 'UserInteraction',
+                    userName: profileName
+                }
+            });
 
             // if (incomingMessage) {
             //     await sendResponse(`[ System Notification ] - Existing user: ${profileName} has interacted with Luna! Prompt: \n ${incomingMessage}`, 'whatsapp:+18572009432');
