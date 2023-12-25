@@ -1783,7 +1783,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
         for (const toolCall of requiredAction.submit_tool_outputs.tool_calls) {
 
             console.log("TOOLCALL!!!: ", toolCall);
-            const tool_call_id = toolCall.tool_call_id;
+            const tool_call_id = toolCall.id;
             console.log("TOOLCALLID: ", tool_call_id);
             const functionName = toolCall.function.name;
             const args = toolCall.function.arguments;
