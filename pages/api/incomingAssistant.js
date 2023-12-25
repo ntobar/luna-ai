@@ -1591,6 +1591,8 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
 
 
         assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
+        let assistant = await setupAssistant();
+        assistant_id = assistant.id;
         console.log(`Assistand ID: ${assistant_id}`);
         // Hard-coded assistant so we dont create a new one for each request
         // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
