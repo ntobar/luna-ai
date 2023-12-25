@@ -1686,7 +1686,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
             // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
             assistantResponse.setTextResponse(lastMessageForRun.content[0].text.value);
 
-            assistantResponses.add(assistantResponse);
+            assistantResponses.push(assistantResponse);
             const logs = await openai.beta.threads.runs.steps.list(threadId, run.id);
             logs.body.data.forEach(log => {
                 console.log(`[ Assistants API ][ LOGS ] - Log step details: ${log.step_details}`);
