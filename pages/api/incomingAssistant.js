@@ -1568,8 +1568,8 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         //     assistant = await setupAssistant();
         // }
 
-        // let assistant_id = 'asst_Lbe2bp6HuYz8QErB4rogMeJj';
-        let assistant_id;
+        let assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
+        // let assistant_id;
 
         if (mediaType) {
             if (mediaType == "image/jpeg") {
