@@ -1871,6 +1871,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 
         return assistantResponses;
     } catch (err) {
+        cancelRun(threadId, runId);
         console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
 
         throw new AssistantResponseError(openaiErrorMessage);
