@@ -191,6 +191,7 @@ module.exports = async (req, res) => {
         if (messageResponse) {
             for (const response of messageResponse) {
                 if (response.type == "image") {
+                    console.log(`[ FINAL RESPONSE: ] - Image type detected in response, preparing to send`);
                     const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
                     await client.messages
@@ -214,7 +215,7 @@ module.exports = async (req, res) => {
                         });
                 } else if (response.type == "text") {
                     const twilioResponse = await sendResponse(response.content, fromNumber);
-                    return twilioResponse;
+                    // return twilioResponse;
                 }
 
             }
