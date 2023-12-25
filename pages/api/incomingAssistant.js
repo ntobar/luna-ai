@@ -1550,6 +1550,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         console.log("[ Assistants API ][ Handle Message ] - Received message request with media type: ", mediaType);
 
     }
+    let assistantResponses= [];
     const assistantResponse = new AssistantResponse();
 
     let visionApiAssistantId = 'asst_MR5MRKAJ5rc0qhaAsKi7WW6C';
@@ -1685,11 +1686,12 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
             // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
             assistantResponse.setTextResponse(lastMessageForRun.content[0].text.value);
 
+            assistantResponses.add(assistantResponse);
             const logs = await openai.beta.threads.runs.steps.list(threadId, run.id);
             logs.body.data.forEach(log => {
                 console.log(`[ Assistants API ][ LOGS ] - Log step details: ${log.step_details}`);
             });
-            return assistantResponse;
+            return assistantResponses;
             // return lastMessageForRun;
             // return assistantMessages;
         }
