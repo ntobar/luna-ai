@@ -1775,12 +1775,15 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
     let toolOutputs = []; // To store outputs for each tool call
 
     try {
-        const assistantResponse = new AssistantResponse();
 
+
+        console.log(`[ ~~~~ DEBUGGING ~~~~ ] Tool call length: ${requiredAction.submit_tool_outputs.tool_calls.length}`)
 
         // Array to hold the promises for each function call that needs to be handled
         // const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
         for (const toolCall of requiredAction.submit_tool_outputs.tool_calls) {
+            let assistantResponse = new AssistantResponse();
+
 
             console.log("TOOLCALL!!!: ", toolCall);
             const tool_call_id = toolCall.id;
