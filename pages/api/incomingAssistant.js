@@ -5,7 +5,7 @@ const twilio = require('twilio');
 const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
 const path = require('path');
-const db = require('../../db/db');
+// const db = require('../../db/db');
 const fetch = require('node-fetch');
 
 
@@ -188,34 +188,66 @@ module.exports = async (req, res) => {
         // console.log("MESSAGE RESPONSE: ", messageResponse.content[0].text.value);
         console.log("MESSAGE RESPONSE: ", messageResponse);
 
-
         if (messageResponse) {
-            if (messageResponse.type == "image") {
-                const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            for (const response of messageResponse) {
+                if (response.type == "image") {
+                    const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-                await client.messages
-                    .create({
-                        mediaUrl: [`${messageResponse.content}`],
-                        from: 'whatsapp:+593994309557',
-                        // to: `whatsapp:${fromNumber}`
-                        to: fromNumber
+                    await client.messages
+                        .create({
+                            mediaUrl: [`${response.content}`],
+                            from: 'whatsapp:+593994309557',
+                            // to: `whatsapp:${fromNumber}`
+                            to: fromNumber
 
-                    })
-                    .then(message => {
-                        console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
-                        // res.status(200).send({ sid: message.sid });  // send a response
-                    })
-                    .catch(err => {
-                        console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
-                        console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
+                        })
+                        .then(message => {
+                            console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
+                            // res.status(200).send({ sid: message.sid });  // send a response
+                        })
+                        .catch(err => {
+                            console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
+                            console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
 
-                        throw new Error(err.message);
-                        // res.status(500).send({ error: err.message });  // send a response
-                    });
-            } else if (messageResponse.type == "text") {
-                const response = await sendResponse(messageResponse.content, fromNumber);
-                return response;
+                            throw new Error(err.message);
+                            // res.status(500).send({ error: err.message });  // send a response
+                        });
+                } else if (response.type == "text") {
+                    const twilioResponse = await sendResponse(response.content, fromNumber);
+                    return twilioResponse;
+                }
+
             }
+
+
+
+            // if (messageResponse) {
+            //     if (messageResponse.type == "image") {
+            //         const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+            //         await client.messages
+            //             .create({
+            //                 mediaUrl: [`${messageResponse.content}`],
+            //                 from: 'whatsapp:+593994309557',
+            //                 // to: `whatsapp:${fromNumber}`
+            //                 to: fromNumber
+
+            //             })
+            //             .then(message => {
+            //                 console.log(`[ Image Generation ] Message sent with SID ${message.sid}`);
+            //                 // res.status(200).send({ sid: message.sid });  // send a response
+            //             })
+            //             .catch(err => {
+            //                 console.error(`[ ERROR ][ Image Generation ] - error sending response to twilio client: ${err}`);
+            //                 console.error(`[ ERROR ][ Image Generation ] - error message: ${err.message}`);
+
+            //                 throw new Error(err.message);
+            //                 // res.status(500).send({ error: err.message });  // send a response
+            //             });
+            //     } else if (messageResponse.type == "text") {
+            //         const response = await sendResponse(messageResponse.content, fromNumber);
+            //         return response;
+            //     }
 
         } else {
             try {
@@ -511,18 +543,18 @@ module.exports = async (req, res) => {
 };
 
 
-async function testConnection() {
-    try {
-        // Execute a simple query to retrieve data
-        const result = await db.query('SELECT * FROM users LIMIT 1');
-        console.log('Connection successful:', result);
-    } catch (error) {
-        console.error('Error connecting to the database:', error);
-    } finally {
-        // Close the database connection
-        db.$pool.end();
-    }
-}
+// async function testConnection() {
+//     try {
+//         // Execute a simple query to retrieve data
+//         const result = await db.query('SELECT * FROM users LIMIT 1');
+//         console.log('Connection successful:', result);
+//     } catch (error) {
+//         console.error('Error connecting to the database:', error);
+//     } finally {
+//         // Close the database connection
+//         db.$pool.end();
+//     }
+// }
 
 async function getGpt3Response2(prompt) {
     console.log(prompt);
@@ -574,7 +606,7 @@ async function getGpt4Response(prompt, history) {
             console.log("IN ELSE LINE 325: ");
             response = await openai.chat.completions.create({
                 // model: "gpt-3.5-turbo-16k",
-                model: "gpt-3.5-turboo",
+                model: "gpt-3.5-turbo",
                 // model: "gpt-4",
                 messages: prompt,
             });
@@ -1669,26 +1701,94 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
     }
 }
 
+// async function handleRequiredAction(requiredAction, assistantId, runId, threadId) {
+//     console.log("[ Assistants API ][ Handling Action ] - A request to handle required action has been received");
+
+//     try {
+//         const assistantResponse = new AssistantResponse();
+
+//         console.log(`[ ~~~~ DEBUGGING ~~~~ ] Tool call length: ${requiredAction.submit_tool_outputs.tool_calls.length}`)
+//         // Check if there are any tool calls and process only the first one
+//         if (requiredAction.submit_tool_outputs.tool_calls.length > 0) {
+//             requiredAction.submit_tool_outputs.tool_calls.forEach(toolCall => {
+//                 console.log("TOOL CALLS!!!!!");
+//                 console.log(toolCall);
+//             })
+//             const firstToolCall = requiredAction.submit_tool_outputs.tool_calls[0];
+//             console.log("FIRST TOOL CALL: ", firstToolCall);
+
+//             const tool_call_id = firstToolCall.id;
+//             const functionName = firstToolCall.function.name;
+//             const args = firstToolCall.function.arguments;
+//             const argsObject = JSON.parse(args);
+
+//             console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
+
+//             let output;
+//             // Determine which function to call based on the required action
+//             switch (functionName) {
+//                 case 'transcribeAudio':
+//                     const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl, argsObject.mediaType);
+//                     assistantResponse.setTextResponse(transcriptionOutput);
+//                     output = JSON.stringify({ type: 'text', data: { text: transcriptionOutput } });
+//                     break;
+//                 case 'generateImage':
+//                     const imageOutput = await generateImage(argsObject.textPrompt, argsObject.isHd);
+//                     assistantResponse.setImageResponse(imageOutput.data[0].url);
+//                     output = JSON.stringify({ type: 'image', data: { image_url: imageOutput } });
+//                     break;
+//                 case 'visionApi':
+//                     const visionOutput = await visionApi(argsObject.mediaUrl, argsObject.prompt, argsObject.mediaType);
+//                     assistantResponse.setTextResponse(visionOutput);
+//                     output = JSON.stringify({ type: 'text', data: { text: visionOutput } });
+//                     break;
+//                 default:
+//                     throw new Error(`Unknown function requested: ${functionName}`);
+//             }
+
+//             // Submit the result of the tool call back to the assistant
+//             await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
+//                 tool_outputs: [{
+//                     tool_call_id: tool_call_id,
+//                     output: output,
+//                 }],
+//             });
+
+//         } else {
+//             console.log("[ Assistants API ][ Handling Action ] - No tool calls to process.");
+//         }
+
+//         console.log("[ Assistants API ][ Required Action Handling ] - Successfully handled required action");
+//         return assistantResponse;
+//     } catch (err) {
+//         cancelRun(threadId, runId);
+//         console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
+//         throw new AssistantResponseError(openaiErrorMessage);
+//     }
+// }
+
+
 async function handleRequiredAction(requiredAction, assistantId, runId, threadId) {
     console.log("[ Assistants API ][ Handling Action ] - A request to handle required action has been received");
+
+    let assistantResponses = []; // To store responses for each action
+    let toolOutputs = []; // To store outputs for each tool call
 
     try {
         const assistantResponse = new AssistantResponse();
 
-        console.log(`[ ~~~~ DEBUGGING ~~~~ ] Tool call length: ${requiredAction.submit_tool_outputs.tool_calls.length}`)
-        // Check if there are any tool calls and process only the first one
-        if (requiredAction.submit_tool_outputs.tool_calls.length > 0) {
-            requiredAction.submit_tool_outputs.tool_calls.forEach(toolCall => {
-                console.log("TOOL CALLS!!!!!");
-                console.log(toolCall);
-            })
-            const firstToolCall = requiredAction.submit_tool_outputs.tool_calls[0];
-            console.log("FIRST TOOL CALL: ", firstToolCall);
 
-            const tool_call_id = firstToolCall.id;
-            const functionName = firstToolCall.function.name;
-            const args = firstToolCall.function.arguments;
+        // Array to hold the promises for each function call that needs to be handled
+        // const toolOutputsPromises = requiredAction.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+        for (const toolCall of requiredAction.submit_tool_outputs.tool_calls) {
+
+            console.log("TOOLCALL!!!: ", toolCall);
+            const tool_call_id = toolCall.tool_call_id;
+            console.log("TOOLCALLID: ", tool_call_id);
+            const functionName = toolCall.function.name;
+            const args = toolCall.function.arguments;
             const argsObject = JSON.parse(args);
+
 
             console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
 
@@ -1696,45 +1796,88 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
             // Determine which function to call based on the required action
             switch (functionName) {
                 case 'transcribeAudio':
+                    console.log("ARGS OBJECT: ", argsObject);
                     const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl, argsObject.mediaType);
+                    console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
                     assistantResponse.setTextResponse(transcriptionOutput);
                     output = JSON.stringify({ type: 'text', data: { text: transcriptionOutput } });
                     break;
                 case 'generateImage':
+                    const argsObject = JSON.parse(args);
+                    console.log("Parsed ARGS: ", argsObject);
+                    console.log("Parsed ARGS.textPrompt: ", argsObject.textPrompt);
+
                     const imageOutput = await generateImage(argsObject.textPrompt, argsObject.isHd);
+                    console.log("Image output inside switch: ", imageOutput);
                     assistantResponse.setImageResponse(imageOutput.data[0].url);
-                    output = JSON.stringify({ type: 'image', data: { image_url: imageOutput } });
+
+                    // return {
+                    //     tool_call_id: toolCall.id,
+                    //     output: { type: 'image', data: { image_url: imageOutput } },
+                    // };
+
+                    output = JSON.stringify({ type: 'image', data: { image_url: imageOutput } }) // Serialize the output to a JSON string
                     break;
                 case 'visionApi':
-                    const visionOutput = await visionApi(argsObject.mediaUrl, argsObject.prompt, argsObject.mediaType);
+                    const argsObjectJson = JSON.parse(args);
+
+                    const visionOutput = await visionApi(argsObjectJson.mediaUrl, argsObjectJson.prompt, argsObjectJson.mediaType);
+                    console.log(`VISION OUTPUT: ${visionOutput}`);
                     assistantResponse.setTextResponse(visionOutput);
-                    output = JSON.stringify({ type: 'text', data: { text: visionOutput } });
+
+                    output = JSON.stringify({ type: 'text', data: { text: visionOutput } })
                     break;
                 default:
                     throw new Error(`Unknown function requested: ${functionName}`);
             }
 
-            // Submit the result of the tool call back to the assistant
-            await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-                tool_outputs: [{
-                    tool_call_id: tool_call_id,
-                    output: output,
-                }],
+            assistantResponses.push(assistantResponse);
+            toolOutputs.push({
+                tool_call_id: tool_call_id,
+                output: output
             });
+        };
 
-        } else {
-            console.log("[ Assistants API ][ Handling Action ] - No tool calls to process.");
+        // Wait for all tool calls to be processed
+
+        // Submit the results of the tool calls back to the assistant
+        // const run = await openai.beta.threads.runs.submitToolOutputs(
+        //     assistant_id: assistantId,
+        //     run_id: runId,
+        //     tool_outputs: toolOutputs,
+        // );
+
+        console.log("TOOL OUTPUTS: ", toolOutputs);
+        console.log("TOOL OUTPUTS DATA: ", toolOutputs.output);
+
+        // const run = await openai.beta.threads.runs.submitToolOutputs(
+        //     threadId,
+        //     runId,
+        //     {
+        //         tool_outputs: toolOutputs,
+        //     }
+        // );
+
+        // Submit all tool outputs
+        if (toolOutputs.length > 0) {
+            await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
+                tool_outputs: toolOutputs
+            });
         }
 
-        console.log("[ Assistants API ][ Required Action Handling ] - Successfully handled required action");
-        return assistantResponse;
-    } catch (err) {
-        cancelRun(threadId, runId);
-        console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
-        throw new AssistantResponseError(openaiErrorMessage);
-    }
-}
+        console.log("[ Assistants API ][ Required Action Handling ] - Successfully submitted tool outputs");
+        // After submitting tool outputs, get the updated assistant's messages
 
+
+        return assistantResponses;
+    } catch (err) {
+        console.log("[ ERROR ][ Assistants API ][ Required Action Handling ] - Error handling required action: ", err);
+
+        throw new AssistantResponseError(openaiErrorMessage);
+
+    }
+    // return imageUrl;
+}
 
 
 
@@ -1759,6 +1902,7 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 
 //             console.log("[ Assistants API ][ Handling Action ] - Action to handle: ", functionName);
 
+//             let output;
 //             // Determine which function to call based on the required action
 //             switch (functionName) {
 //                 case 'transcribeAudio':
@@ -1766,10 +1910,8 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 //                     const transcriptionOutput = await transcribeAudio(argsObject.incomingMediaUrl, argsObject.mediaType);
 //                     console.log("TRANSCRIPTION IN SWITCH: ", transcriptionOutput);
 //                     assistantResponse.setTextResponse(transcriptionOutput);
-//                     return {
-//                         tool_call_id: toolCall.id,
-//                         output: JSON.stringify({ type: 'text', data: { text: transcriptionOutput } }),
-//                     };
+//                     output = JSON.stringify({ type: 'text', data: { text: transcriptionOutput } });
+//                     break;
 //                 case 'generateImage':
 //                     const argsObject = JSON.parse(args);
 //                     console.log("Parsed ARGS: ", argsObject);
@@ -1783,10 +1925,9 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 //                     //     tool_call_id: toolCall.id,
 //                     //     output: { type: 'image', data: { image_url: imageOutput } },
 //                     // };
-//                     return {
-//                         tool_call_id: toolCall.id,
-//                         output: JSON.stringify({ type: 'image', data: { image_url: imageOutput } }), // Serialize the output to a JSON string
-//                     };
+
+//                     output = JSON.stringify({ type: 'image', data: { image_url: imageOutput } }) // Serialize the output to a JSON string
+//                     break;
 //                 case 'visionApi':
 //                     const argsObjectJson = JSON.parse(args);
 
@@ -1794,10 +1935,8 @@ async function handleRequiredAction(requiredAction, assistantId, runId, threadId
 //                     console.log(`VISION OUTPUT: ${visionOutput}`);
 //                     assistantResponse.setTextResponse(visionOutput);
 
-//                     return {
-//                         tool_call_id: toolCall.id,
-//                         output: JSON.stringify({ type: 'text', data: { text: visionOutput } }),
-//                     };
+//                     output = JSON.stringify({ type: 'text', data: { text: visionOutput } })
+//                     break;
 //                 default:
 //                     throw new Error(`Unknown function requested: ${functionName}`);
 //             }
