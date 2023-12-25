@@ -1568,6 +1568,7 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         //     assistant = await setupAssistant();
         // }
 
+        // let assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
         let assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
         // let assistant_id;
 
@@ -1589,6 +1590,8 @@ async function handleMessage(userId, userMessage, mediaUrl, mediaType, profileNa
         // let assistant_id = 'asst_Br2fpSsagEd3LcYCP9fp2RQy';
 
 
+        assistant_id = 'asst_GbXeYwbPuTrkya5nvilPImwQ';
+        console.log(`Assistand ID: ${assistant_id}`);
         // Hard-coded assistant so we dont create a new one for each request
         // const assistant_id = 'asst_0O5Aqevvkh7EufeUeZgYJiHJ';
 
