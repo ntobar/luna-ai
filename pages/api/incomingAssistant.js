@@ -5,6 +5,7 @@ const twilio = require('twilio');
 const fs = require('fs-extra');
 const CloudConvert = require('cloudconvert');
 const path = require('path');
+const FormData = require('form-data');
 // const db = require('../../db/db');
 const fetch = require('node-fetch');
 
@@ -1017,8 +1018,6 @@ async function transcribeAudio(incomingMediaUrl, mediaType) {
 
     console.log(`[ Audio Transcription  ][ OPENAI ] - Calling the openai Whisper-1 api for media with url: ${incomingMediaUrl}`);
 
-
-
     try {
 
         const response = await axios.get(incomingMediaUrl, { responseType: 'stream' });
@@ -1037,12 +1036,25 @@ async function transcribeAudio(incomingMediaUrl, mediaType) {
             writer.on('error', reject);
         });
 
-        const transcriptionResponse = await openai.audio.transcriptions.create({
-            file: fs.createReadStream(tempFilePath),
-            model: 'whisper-1'
-        });
-        console.log("TRANSCRIPTION TEXT: ", transcriptionResponse.text);
-        console.log(`[ Audio Transcription  ][ OPENAI ] - Successfully received response from OPENAI api, response: ${transcriptionResponse.text}`);
+        // Build multipart/form-data request manually using axios to avoid SDK transport issues
+        const formData = new FormData();
+        formData.append('model', 'whisper-1');
+        formData.append('file', fs.createReadStream(tempFilePath));
+
+        const transcriptionResponse = await axios.post(
+            'https://api.openai.com/v1/audio/transcriptions',
+            formData,
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                    ...formData.getHeaders(),
+                },
+                maxBodyLength: Infinity,
+            }
+        );
+
+        console.log("TRANSCRIPTION TEXT: ", transcriptionResponse.data.text);
+        console.log(`[ Audio Transcription  ][ OPENAI ] - Successfully received response from OPENAI api, response: ${transcriptionResponse.data.text}`);
 
 
         // Delete the temporary file
@@ -1050,7 +1062,7 @@ async function transcribeAudio(incomingMediaUrl, mediaType) {
             if (err) console.error('Error deleting temporary file:', err);
         });
 
-        return transcriptionResponse.text;
+        return transcriptionResponse.data.text;
     } catch (err) {
         console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Failed to transcribe audio, error: ${err}`);
         console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Error message: ${err.message}`);
