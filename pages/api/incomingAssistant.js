@@ -1066,6 +1066,22 @@ async function transcribeAudio(incomingMediaUrl, mediaType) {
     } catch (err) {
         console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Failed to transcribe audio, error: ${err}`);
         console.log(`[ ERROR ][ Audio Transcription  ][ CloudConvert ] - Error message: ${err.message}`);
+
+        // Log structured details from OpenAI HTTP response if available
+        if (err.response) {
+            console.log(`[ ERROR ][ Audio Transcription  ][ OPENAI ] - HTTP status: ${err.response.status}`);
+            try {
+                console.log(`[ ERROR ][ Audio Transcription  ][ OPENAI ] - Response headers: ${JSON.stringify(err.response.headers || {})}`);
+                console.log(`[ ERROR ][ Audio Transcription  ][ OPENAI ] - Response data: ${JSON.stringify(err.response.data || {})}`);
+            } catch (jsonErr) {
+                console.log(`[ ERROR ][ Audio Transcription  ][ OPENAI ] - Failed to stringify error response: ${jsonErr}`);
+            }
+        } else if (err.request) {
+            console.log(`[ ERROR ][ Audio Transcription  ][ OPENAI ] - No response received from API (network or DNS issue).`);
+        } else {
+            console.log(`[ ERROR ][ Audio Transcription  ][ OPENAI ] - Error before request was sent: ${err.message}`);
+        }
+
         throw err;
 
     }
